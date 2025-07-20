@@ -5,7 +5,7 @@ import ReactMarkdown from 'react-markdown'
 
 interface TerminalLine {
   text: string
-  type?: 'normal' | 'error' | 'processing' | 'separator' | 'user-input' | 'markdown' | 'ascii-art' | 'tagline' | 'ai-response'
+  type?: 'normal' | 'error' | 'processing' | 'separator' | 'user-input' | 'markdown' | 'ascii-art' | 'tagline' | 'ai-response' | 'menu-header'
   isMarkdown?: boolean
   clickableCommand?: string
 }
@@ -509,7 +509,7 @@ Google Cloud Platform
       if (files.length === 0) {
         await addLine('No content available.', 'processing')
       } else {
-        files.forEach((file, index) => {
+        files.forEach((file: any, index: number) => {
           const displayTitle = file.metadata?.company 
             ? `${file.title} - ${file.metadata.company}`
             : file.title
