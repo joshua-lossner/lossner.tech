@@ -1,14 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 const GITHUB_API_BASE = 'https://api.github.com';
-const REPO_OWNER = 'joshua-lossner'; // This would be your actual GitHub username
-const REPO_NAME = 'lossner.personal';
+const REPO_OWNER = process.env.GITHUB_OWNER || 'joshua-lossner';
+const REPO_NAME = process.env.GITHUB_REPO || 'lossner.personal';
+const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const directory = searchParams.get('directory');
     const file = searchParams.get('file');
+
+    console.log('Content API called:', { directory, file, hasToken: !!GITHUB_TOKEN });
 
     if (file && directory) {
       // Fetch specific file content
@@ -23,7 +26,12 @@ export async function GET(request: NextRequest) {
   } catch (error: any) {
     console.error('Content API error:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch content' },
+      { 
+        error: 'Failed to fetch content',
+        details: error.message,
+        hasToken: !!GITHUB_TOKEN,
+        repo: `${REPO_OWNER}/${REPO_NAME}`
+      },
       { status: 500 }
     );
   }
@@ -32,9 +40,32 @@ export async function GET(request: NextRequest) {
 async function fetchRootDirectories() {
   const url = `${GITHUB_API_BASE}/repos/${REPO_OWNER}/${REPO_NAME}/contents/content`;
   
-  const response = await fetch(url);
+  const headers: HeadersInit = {
+    'Accept': 'application/vnd.github.v3+json',
+    'User-Agent': 'lossner-tech-website'
+  };
+  
+  if (GITHUB_TOKEN) {
+    headers.Authorization = `Bearer ${GITHUB_TOKEN}`;
+  }
+  
+  const response = await fetch(url, { headers });
   if (!response.ok) {
-    throw new Error(`GitHub API error: ${response.statusText}`);
+    // If GitHub API fails (likely due to private repo without auth), return fallback directory structure
+    if (response.status === 404 || response.status === 403) {
+      console.log('GitHub API failed, returning fallback directories');
+      return NextResponse.json({ 
+        directories: [
+          { name: 'Experience', path: 'content/Experience' },
+          { name: 'Skills', path: 'content/Skills' },
+          { name: 'Projects', path: 'content/Projects' },
+          { name: 'Education', path: 'content/Education' },
+          { name: 'Journal', path: 'content/Journal' },
+          { name: 'About', path: 'content/About' }
+        ]
+      });
+    }
+    throw new Error(`GitHub API error: ${response.status} ${response.statusText}`);
   }
 
   const data = await response.json();
@@ -51,9 +82,23 @@ async function fetchRootDirectories() {
 async function fetchDirectoryListing(directory: string) {
   const url = `${GITHUB_API_BASE}/repos/${REPO_OWNER}/${REPO_NAME}/contents/content/${directory}`;
   
-  const response = await fetch(url);
+  const headers: HeadersInit = {
+    'Accept': 'application/vnd.github.v3+json',
+    'User-Agent': 'lossner-tech-website'
+  };
+  
+  if (GITHUB_TOKEN) {
+    headers.Authorization = `Bearer ${GITHUB_TOKEN}`;
+  }
+  
+  const response = await fetch(url, { headers });
   if (!response.ok) {
-    throw new Error(`GitHub API error: ${response.statusText}`);
+    // If GitHub API fails, return fallback content for directory
+    if (response.status === 404 || response.status === 403) {
+      console.log(`GitHub API failed for directory ${directory}, returning fallback content`);
+      return getFallbackDirectoryContent(directory);
+    }
+    throw new Error(`GitHub API error: ${response.status} ${response.statusText}`);
   }
 
   const data = await response.json();
@@ -109,9 +154,23 @@ async function fetchDirectoryListing(directory: string) {
 async function fetchFileContent(directory: string, filename: string) {
   const url = `${GITHUB_API_BASE}/repos/${REPO_OWNER}/${REPO_NAME}/contents/content/${directory}/${filename}`;
   
-  const response = await fetch(url);
+  const headers: HeadersInit = {
+    'Accept': 'application/vnd.github.v3+json',
+    'User-Agent': 'lossner-tech-website'
+  };
+  
+  if (GITHUB_TOKEN) {
+    headers.Authorization = `Bearer ${GITHUB_TOKEN}`;
+  }
+  
+  const response = await fetch(url, { headers });
   if (!response.ok) {
-    throw new Error(`GitHub API error: ${response.statusText}`);
+    // If GitHub API fails, return fallback content for file
+    if (response.status === 404 || response.status === 403) {
+      console.log(`GitHub API failed for file ${directory}/${filename}, returning fallback content`);
+      return getFallbackFileContent(directory, filename);
+    }
+    throw new Error(`GitHub API error: ${response.status} ${response.statusText}`);
   }
 
   const data = await response.json();
@@ -144,6 +203,113 @@ async function fetchFileContent(directory: string, filename: string) {
     title,
     content: bodyContent,
     metadata,
+    filename
+  });
+}
+
+// Fallback content when GitHub API is not accessible
+function getFallbackDirectoryContent(directory: string) {
+  const fallbackData: Record<string, any[]> = {
+    'Experience': [
+      {
+        name: 'grinnell-mutual-devops-engineer.md',
+        title: 'DevOps Engineer',
+        order: 1,
+        metadata: { company: 'Grinnell Mutual Insurance', period: 'June 2022 - Present' },
+        downloadUrl: null
+      },
+      {
+        name: 'mumo-systems-senior-solutions-consultant.md',
+        title: 'Senior Solutions Consultant',
+        order: 2,
+        metadata: { company: 'Mumo Systems', period: 'June 2021 - June 2022' },
+        downloadUrl: null
+      }
+    ],
+    'Skills': [
+      {
+        name: 'release-management-automation.md',
+        title: 'Release Management and Automation',
+        order: 1,
+        metadata: { category: 'Core Competency' },
+        downloadUrl: null
+      },
+      {
+        name: 'system-administration-infrastructure.md',
+        title: 'System Administration and IT Infrastructure',
+        order: 2,
+        metadata: { category: 'Core Competency' },
+        downloadUrl: null
+      }
+    ],
+    'Projects': [
+      {
+        name: 'atlassian-enterprise-migration.md',
+        title: 'Atlassian Server to Data Center Migration',
+        order: 1,
+        metadata: { company: 'Berkley Technology Services', period: '2020-2021' },
+        downloadUrl: null
+      }
+    ],
+    'Education': [
+      {
+        name: 'university-phoenix-masters.md',
+        title: 'Master of Science in Information Technology',
+        order: 1,
+        metadata: { institution: 'University of Phoenix Online', period: 'September 2008 - May 2010' },
+        downloadUrl: null
+      }
+    ],
+    'Journal': [
+      {
+        name: 'enterprise-automation-lessons.md',
+        title: 'Lessons from Managing 18,000+ Annual Deployments',
+        order: 1,
+        metadata: { date: '2023-11-15', category: 'Enterprise Automation' },
+        downloadUrl: null
+      }
+    ],
+    'About': [
+      {
+        name: 'joshua-lossner-profile.md',
+        title: 'About Joshua Lossner',
+        order: 1,
+        metadata: { category: 'Professional Profile' },
+        downloadUrl: null
+      }
+    ]
+  };
+
+  const files = fallbackData[directory] || [];
+  return NextResponse.json({ files });
+}
+
+function getFallbackFileContent(directory: string, filename: string) {
+  // Return a placeholder message indicating the content will be available once GitHub token is configured
+  const title = filename.replace('.md', '').replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+  const content = `# ${title}
+
+Content loading requires GitHub API authentication. 
+
+To enable dynamic content loading from the lossner.personal repository:
+
+1. Create a GitHub Personal Access Token with repository access
+2. Add the token to your environment variables as \`GITHUB_TOKEN\`
+3. Restart the development server
+
+**Repository**: ${REPO_OWNER}/${REPO_NAME}  
+**File**: content/${directory}/${filename}
+
+Once configured, this content will be dynamically loaded from the private repository containing your professional portfolio data.`;
+
+  return NextResponse.json({
+    title,
+    content,
+    metadata: {
+      status: 'fallback',
+      directory,
+      filename
+    },
     filename
   });
 }
