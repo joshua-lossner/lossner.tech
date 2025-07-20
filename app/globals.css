@@ -1,0 +1,56 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-terminal-bg text-terminal-green font-mono;
+  }
+}
+
+@layer utilities {
+  .scanline {
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .scanline::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: rgba(0, 255, 0, 0.1);
+    animation: scanline 6s linear infinite;
+  }
+  
+  @keyframes scanline {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(100vh); }
+  }
+  
+  .terminal-glow {
+    text-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
+  }
+  
+  .crt-effect {
+    animation: textShadow 1.6s infinite;
+  }
+  
+  @keyframes textShadow {
+    0% { text-shadow: 0.4389924193300864px 0 1px rgba(0,30,255,0.5), -0.4389924193300864px 0 1px rgba(255,0,80,0.3), 0 0 3px; }
+    5% { text-shadow: 2.7928974010788217px 0 1px rgba(0,30,255,0.5), -2.7928974010788217px 0 1px rgba(255,0,80,0.3), 0 0 3px; }
+    10% { text-shadow: 0.02956275843481219px 0 1px rgba(0,30,255,0.5), -0.02956275843481219px 0 1px rgba(255,0,80,0.3), 0 0 3px; }
+    100% { text-shadow: 0.02956275843481219px 0 1px rgba(0,30,255,0.5), -0.02956275843481219px 0 1px rgba(255,0,80,0.3), 0 0 3px; }
+  }
+  
+  .scrollbar-hide {
+    /* Hide scrollbar for Chrome, Safari and Opera */
+    -webkit-scrollbar: none;
+    
+    /* Hide scrollbar for IE, Edge and Firefox */
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
