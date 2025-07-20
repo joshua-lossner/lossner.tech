@@ -23,6 +23,7 @@ const TerminalResume = () => {
   const [isLoadingContent, setIsLoadingContent] = useState(false)
   const [audioEnabled, setAudioEnabled] = useState(false)
   const [isPlaying, setIsPlaying] = useState(false)
+  const [needsInputDivider, setNeedsInputDivider] = useState(false)
   const terminalRef = useRef<HTMLDivElement>(null)
   const hiddenInputRef = useRef<HTMLInputElement>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
@@ -132,6 +133,7 @@ const TerminalResume = () => {
     setIsDisplayingContent(false)
     setCurrentMenu('main')
     setCurrentDirectory('')
+    setNeedsInputDivider(true)
     await showBanner()
     await addLine(createBorder('MAIN MENU'), 'normal')
     await addLine('')
@@ -150,6 +152,7 @@ const TerminalResume = () => {
 
   const showHelp = async () => {
     setTerminalLines([])
+    setNeedsInputDivider(false)
     await showBanner()
     await addLine(createBorder('AVAILABLE COMMANDS'), 'normal')
     await addLine('')
@@ -181,6 +184,7 @@ const TerminalResume = () => {
   const showAbout = async () => {
     setTerminalLines([])
     setIsDisplayingContent(true)
+    setNeedsInputDivider(false)
     await showBanner()
     await addLine(createBorder('ABOUT'), 'normal')
     await addLine('')
@@ -215,6 +219,7 @@ Currently focused on distributed systems, AI/ML integration, and building develo
   const showExperience = async () => {
     setTerminalLines([])
     setIsDisplayingContent(true)
+    setNeedsInputDivider(false)
     await showBanner()
     await addLine(createBorder('PROFESSIONAL EXPERIENCE'), 'menu-header')
     await addLine('')
@@ -274,6 +279,7 @@ Currently focused on distributed systems, AI/ML integration, and building develo
   const showSkills = async () => {
     setTerminalLines([])
     setIsDisplayingContent(true)
+    setNeedsInputDivider(false)
     await showBanner()
     await addLine(createBorder('TECHNICAL SKILLS'), 'menu-header')
     await addLine('')
@@ -326,6 +332,7 @@ Currently focused on distributed systems, AI/ML integration, and building develo
   const showProjects = async () => {
     setTerminalLines([])
     setIsDisplayingContent(true)
+    setNeedsInputDivider(false)
     await showBanner()
     await addLine(createBorder('NOTABLE PROJECTS'), 'menu-header')
     await addLine('')
@@ -388,6 +395,7 @@ AI-powered code assistant providing intelligent code completion and refactoring 
   const showEducation = async () => {
     setTerminalLines([])
     setIsDisplayingContent(true)
+    setNeedsInputDivider(false)
     await showBanner()
     await addLine(createBorder('EDUCATION & CERTIFICATIONS'), 'menu-header')
     await addLine('')
@@ -496,6 +504,7 @@ Google Cloud Platform
     setTerminalLines([])
     setCurrentDirectory(directory)
     setCurrentMenu('directory')
+    setNeedsInputDivider(false)
     await showBanner()
     
     await addLine(createBorder(`${directory.toUpperCase()}`), 'normal')
@@ -531,6 +540,7 @@ Google Cloud Platform
   const showFileContent = async (directory: string, filename: string) => {
     setTerminalLines([])
     setIsDisplayingContent(true)
+    setNeedsInputDivider(false)
     
     const fileData = await fetchFileContent(directory, filename)
     
@@ -754,6 +764,7 @@ Google Cloud Platform
       case '/clear':
       case 'clear':
         setTerminalLines([])
+        setNeedsInputDivider(false)
         break
       case 'exit':
         await addLine('Thank you for visiting. Goodbye!', 'processing')
@@ -779,6 +790,11 @@ Google Cloud Platform
           setIsProcessing(true)
           
           const runCommand = async () => {
+            // Add divider before first user input after main menu
+            if (needsInputDivider) {
+              await addLine(createBorder('', '─'), 'separator')
+              setNeedsInputDivider(false)
+            }
             await addLine(`> ${command}`, 'user-input')
             await processCommand(command)
             setIsProcessing(false)
