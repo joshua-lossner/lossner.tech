@@ -262,6 +262,17 @@ Currently focused on distributed systems, AI/ML integration, and building develo
 **Technologies:** Ruby on Rails, JavaScript, MySQL, Redis`
       }
     ]
+
+    // Sort experiences by most recent end date
+    const parseEndYear = (period: string): number => {
+      const parts = period.split('-').map(p => p.trim())
+      const end = parts[1]
+      if (!end || /present/i.test(end)) return new Date().getFullYear() + 1
+      const match = end.match(/\d{4}/)
+      return match ? parseInt(match[0]) : 0
+    }
+
+    experiences.sort((a, b) => parseEndYear(b.period) - parseEndYear(a.period))
     
     for (const exp of experiences) {
       await addLine(exp.title, 'markdown', true)
