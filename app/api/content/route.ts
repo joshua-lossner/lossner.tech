@@ -115,21 +115,21 @@ async function fetchDirectoryListing(directory: string) {
         let title = item.name.replace('.md', '');
         let order = 999;
         let metadata: any = {};
-        
+
         if (frontmatterMatch) {
           const frontmatter = frontmatterMatch[1];
-          const bodyContent = frontmatterMatch[2];
-          
-          // Extract metadata from frontmatter
-          const titleMatch = frontmatter.match(/title:\s*"?([^"\n]+)"?/);
-          const orderMatch = frontmatter.match(/order:\s*(\d+)/);
-          const companyMatch = frontmatter.match(/company:\s*"?([^"\n]+)"?/);
-          const periodMatch = frontmatter.match(/period:\s*"?([^"\n]+)"?/);
-          
-          if (titleMatch) title = titleMatch[1];
-          if (orderMatch) order = parseInt(orderMatch[1]);
-          if (companyMatch) metadata.company = companyMatch[1];
-          if (periodMatch) metadata.period = periodMatch[1];
+          const frontmatterLines = frontmatter.split('\n');
+
+          // Extract all frontmatter fields
+          frontmatterLines.forEach(line => {
+            const match = line.match(/^(\w+):\s*"?([^"\n]+)"?$/);
+            if (match) {
+              const [, key, value] = match;
+              if (key === 'title') title = value;
+              else if (key === 'order') order = parseInt(value);
+              else metadata[key] = value;
+            }
+          });
         }
         
         return {
@@ -142,8 +142,21 @@ async function fetchDirectoryListing(directory: string) {
       })
   );
 
-  // Sort by order, then by title
+  // Sort by start date if available, otherwise by order then title
+  const parseStart = (value: any): number => {
+    if (!value) return -Infinity;
+    const ts = Date.parse(value);
+    if (!isNaN(ts)) return ts;
+    const m = String(value).match(/\d{4}/);
+    return m ? parseInt(m[0]) : -Infinity;
+  };
+
   files.sort((a, b) => {
+    const startA = parseStart(a.metadata?.start);
+    const startB = parseStart(b.metadata?.start);
+    if (startA !== -Infinity || startB !== -Infinity) {
+      return startB - startA;
+    }
     if (a.order !== b.order) return a.order - b.order;
     return a.title.localeCompare(b.title);
   });
@@ -215,14 +228,22 @@ function getFallbackDirectoryContent(directory: string) {
         name: 'grinnell-mutual-devops-engineer.md',
         title: 'DevOps Engineer',
         order: 1,
-        metadata: { company: 'Grinnell Mutual Insurance', period: 'June 2022 - Present' },
+        metadata: {
+          company: 'Grinnell Mutual Insurance',
+          period: 'June 2022 - Present',
+          start: '2022-06-01'
+        },
         downloadUrl: null
       },
       {
         name: 'mumo-systems-senior-solutions-consultant.md',
         title: 'Senior Solutions Consultant',
         order: 2,
-        metadata: { company: 'Mumo Systems', period: 'June 2021 - June 2022' },
+        metadata: {
+          company: 'Mumo Systems',
+          period: 'June 2021 - June 2022',
+          start: '2021-06-01'
+        },
         downloadUrl: null
       }
     ],
