@@ -231,7 +231,8 @@ function getFallbackDirectoryContent(directory: string) {
         metadata: {
           company: 'Grinnell Mutual Insurance',
           period: 'June 2022 - Present',
-          start: '2022-06-01'
+          start: '2022-06-01',
+          end: 'present'
         },
         downloadUrl: null
       },
@@ -242,7 +243,8 @@ function getFallbackDirectoryContent(directory: string) {
         metadata: {
           company: 'Mumo Systems',
           period: 'June 2021 - June 2022',
-          start: '2021-06-01'
+          start: '2021-06-01',
+          end: '2022-06-01'
         },
         downloadUrl: null
       }

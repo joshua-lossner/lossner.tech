@@ -516,6 +516,23 @@ Google Cloud Platform
     }
   }
 
+  const extractYear = (value: any): string => {
+    if (!value) return ''
+    const ts = Date.parse(value)
+    if (!isNaN(ts)) return new Date(ts).getFullYear().toString()
+    const match = String(value).match(/(\d{4})/)
+    return match ? match[1] : ''
+  }
+
+  const formatPeriod = (metadata: any): string => {
+    if (!metadata) return ''
+    if (metadata.period) return metadata.period
+    const startYear = extractYear(metadata.start)
+    if (!startYear) return ''
+    const endYear = metadata.end ? extractYear(metadata.end) : 'Present'
+    return endYear ? `${startYear} - ${endYear}` : startYear
+  }
+
   // Show directory listing (like books in coherenceism.info)
   const showDirectoryListing = async (directory: string) => {
     setTerminalLines([])
@@ -537,7 +554,8 @@ Google Cloud Platform
       } else {
         files.forEach((file: any, index: number) => {
           const displayTitle = file.title
-          const displayPeriod = file.metadata?.period ? ` (${file.metadata.period})` : ''
+          const periodStr = formatPeriod(file.metadata)
+          const displayPeriod = periodStr ? ` (${periodStr})` : ''
 
           addLine(`${index + 1}. ${displayTitle}${displayPeriod}`, 'normal', false, `${index + 1}`)
         })
@@ -572,8 +590,9 @@ Google Cloud Platform
     if (fileData.metadata?.company) {
       await addLine(`**Company:** ${fileData.metadata.company}`, 'markdown', true)
     }
-    if (fileData.metadata?.period) {
-      await addLine(`**Period:** ${fileData.metadata.period}`, 'markdown', true)
+    const periodString = formatPeriod(fileData.metadata)
+    if (periodString) {
+      await addLine(`**Period:** ${periodString}`, 'markdown', true)
     }
     if (fileData.metadata?.location) {
       await addLine(`**Location:** ${fileData.metadata.location}`, 'markdown', true)
