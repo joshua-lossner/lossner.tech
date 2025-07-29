@@ -536,11 +536,9 @@ Google Cloud Platform
         await addLine('No content available.', 'processing')
       } else {
         files.forEach((file: any, index: number) => {
-          const displayTitle = file.metadata?.company 
-            ? `${file.title} - ${file.metadata.company}`
-            : file.title
+          const displayTitle = file.title
           const displayPeriod = file.metadata?.period ? ` (${file.metadata.period})` : ''
-          
+
           addLine(`${index + 1}. ${displayTitle}${displayPeriod}`, 'normal', false, `${index + 1}`)
         })
       }
