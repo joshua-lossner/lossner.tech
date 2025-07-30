@@ -262,6 +262,23 @@ Currently focused on distributed systems, AI/ML integration, and building develo
 **Technologies:** Ruby on Rails, JavaScript, MySQL, Redis`
       }
     ]
+
+    // Sort experiences by most recent start date
+    const parseStartDate = (exp: any): number => {
+      if (exp.start) {
+        const ts = Date.parse(exp.start)
+        if (!isNaN(ts)) return ts
+        const m = exp.start.match(/\d{4}/)
+        if (m) return parseInt(m[0])
+      }
+
+      const parts = (exp.period || '').split('-').map((p: string) => p.trim())
+      const start = parts[0]
+      const match = start.match(/\d{4}/)
+      return match ? parseInt(match[0]) : 0
+    }
+
+    experiences.sort((a, b) => parseStartDate(b) - parseStartDate(a))
     
     for (const exp of experiences) {
       await addLine(exp.title, 'markdown', true)
@@ -499,6 +516,23 @@ Google Cloud Platform
     }
   }
 
+  const extractYear = (value: any): string => {
+    if (!value) return ''
+    const ts = Date.parse(value)
+    if (!isNaN(ts)) return new Date(ts).getFullYear().toString()
+    const match = String(value).match(/(\d{4})/)
+    return match ? match[1] : ''
+  }
+
+  const formatPeriod = (metadata: any): string => {
+    if (!metadata) return ''
+    if (metadata.period) return metadata.period
+    const startYear = extractYear(metadata.start)
+    if (!startYear) return ''
+    const endYear = metadata.end ? extractYear(metadata.end) : 'Present'
+    return endYear ? `${startYear} - ${endYear}` : startYear
+  }
+
   // Show directory listing (like books in coherenceism.info)
   const showDirectoryListing = async (directory: string) => {
     setTerminalLines([])
@@ -519,11 +553,10 @@ Google Cloud Platform
         await addLine('No content available.', 'processing')
       } else {
         files.forEach((file: any, index: number) => {
-          const displayTitle = file.metadata?.company 
-            ? `${file.title} - ${file.metadata.company}`
-            : file.title
-          const displayPeriod = file.metadata?.period ? ` (${file.metadata.period})` : ''
-          
+          const displayTitle = file.title
+          const periodStr = formatPeriod(file.metadata)
+          const displayPeriod = periodStr ? ` (${periodStr})` : ''
+
           addLine(`${index + 1}. ${displayTitle}${displayPeriod}`, 'normal', false, `${index + 1}`)
         })
       }
@@ -557,8 +590,9 @@ Google Cloud Platform
     if (fileData.metadata?.company) {
       await addLine(`**Company:** ${fileData.metadata.company}`, 'markdown', true)
     }
-    if (fileData.metadata?.period) {
-      await addLine(`**Period:** ${fileData.metadata.period}`, 'markdown', true)
+    const periodString = formatPeriod(fileData.metadata)
+    if (periodString) {
+      await addLine(`**Period:** ${periodString}`, 'markdown', true)
     }
     if (fileData.metadata?.location) {
       await addLine(`**Location:** ${fileData.metadata.location}`, 'markdown', true)
