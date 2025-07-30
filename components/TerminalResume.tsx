@@ -39,6 +39,15 @@ const TerminalResume = () => {
   const [isGlitching, setIsGlitching] = useState(false)
   const [version, setVersion] = useState('v1.0.0')
 
+  const asciiArt = [
+    '██╗      ██████╗ ███████╗███████╗███╗   ██╗███████╗██████╗',
+    '██║     ██╔═══██╗██╔════╝██╔════╝████╗  ██║██╔════╝██╔══██╗',
+    '██║     ██║   ██║███████╗███████╗██╔██╗ ██║█████╗  ██████╔╝',
+    '██║     ██║   ██║╚════██║╚════██║██║╚██╗██║██╔══╝  ██╔══██╗',
+    '███████╗╚██████╔╝███████║███████║██║ ╚████║███████╗██║  ██║',
+    '╚══════╝ ╚═════╝ ╚══════╝╚══════╝╚═╝  ╚═══╝╚══════╝╚═╝  ╚═╝'
+  ]
+
   // Get version from package.json
   useEffect(() => {
     fetch('/package.json')
@@ -110,23 +119,6 @@ const TerminalResume = () => {
     return char.repeat(leftPadding) + titleWithSpaces + char.repeat(rightPadding)
   }
 
-  const showBanner = async () => {
-    await addLine('')
-    await addLine(createBorder('', '═'), 'separator')
-    await addLine('')
-    await addLine(`
-██╗      ██████╗ ███████╗███████╗███╗   ██╗███████╗██████╗ 
-██║     ██╔═══██╗██╔════╝██╔════╝████╗  ██║██╔════╝██╔══██╗
-██║     ██║   ██║███████╗███████╗██╔██╗ ██║█████╗  ██████╔╝
-██║     ██║   ██║╚════██║╚════██║██║╚██╗██║██╔══╝  ██╔══██╗
-███████╗╚██████╔╝███████║███████║██║ ╚████║███████╗██║  ██║
-╚══════╝ ╚═════╝ ╚══════╝╚══════╝╚═╝  ╚═══╝╚══════╝╚═╝  ╚═╝`, 'ascii-art')
-    await addLine('')
-    await addLine('TAGLINE_PLACEHOLDER', 'tagline')
-    await addLine('')
-    await addLine(createBorder('', '═'), 'separator')
-    await addLine('')
-  }
 
   const showMainMenu = async () => {
     setTerminalLines([])
@@ -134,26 +126,13 @@ const TerminalResume = () => {
     setCurrentMenu('main')
     setCurrentDirectory('')
     setNeedsInputDivider(true)
-    await showBanner()
-    await addLine(createBorder('MAIN MENU'), 'normal')
-    await addLine('')
-    await addLine('1. Experience - Professional work history', 'normal', false, '1')
-    await addLine('2. Skills - Technical expertise & proficiencies', 'normal', false, '2')
-    await addLine('3. Projects - Notable work & contributions', 'normal', false, '3')
-    await addLine('4. Education - Academic background & certifications', 'normal', false, '4')
-    await addLine('5. Journal - Thoughts on tech and career', 'normal', false, '5')
-    await addLine('6. About - Personal introduction', 'normal', false, '6')
-    await addLine('')
-    await addLine(createBorder(), 'normal')
-    await addLine('')
-    await addLine('Type a number above, "help" for commands, or ask Alex a question.', 'processing')
+    await addLine('Type a number from the menu or ask Alex a question.', 'processing')
     await addLine('')
   }
 
   const showHelp = async () => {
     setTerminalLines([])
     setNeedsInputDivider(false)
-    await showBanner()
     await addLine(createBorder('AVAILABLE COMMANDS'), 'normal')
     await addLine('')
     await addLine('/menu     - Return to main menu', 'normal')
@@ -185,7 +164,6 @@ const TerminalResume = () => {
     setTerminalLines([])
     setIsDisplayingContent(true)
     setNeedsInputDivider(false)
-    await showBanner()
     await addLine(createBorder('ABOUT'), 'normal')
     await addLine('')
     const content = `
@@ -220,7 +198,6 @@ Currently focused on distributed systems, AI/ML integration, and building develo
     setTerminalLines([])
     setIsDisplayingContent(true)
     setNeedsInputDivider(false)
-    await showBanner()
     await addLine(createBorder('PROFESSIONAL EXPERIENCE'), 'menu-header')
     await addLine('')
     
@@ -297,7 +274,6 @@ Currently focused on distributed systems, AI/ML integration, and building develo
     setTerminalLines([])
     setIsDisplayingContent(true)
     setNeedsInputDivider(false)
-    await showBanner()
     await addLine(createBorder('TECHNICAL SKILLS'), 'menu-header')
     await addLine('')
     
@@ -350,7 +326,6 @@ Currently focused on distributed systems, AI/ML integration, and building develo
     setTerminalLines([])
     setIsDisplayingContent(true)
     setNeedsInputDivider(false)
-    await showBanner()
     await addLine(createBorder('NOTABLE PROJECTS'), 'menu-header')
     await addLine('')
     
@@ -413,7 +388,6 @@ AI-powered code assistant providing intelligent code completion and refactoring 
     setTerminalLines([])
     setIsDisplayingContent(true)
     setNeedsInputDivider(false)
-    await showBanner()
     await addLine(createBorder('EDUCATION & CERTIFICATIONS'), 'menu-header')
     await addLine('')
     
@@ -458,7 +432,6 @@ Google Cloud Platform
 
   const showContact = async () => {
     setTerminalLines([])
-    await showBanner()
     await addLine(createBorder('CONTACT INFORMATION'), 'normal')
     await addLine('')
     await addLine('Email:    joshua@lossner.tech', 'normal')
@@ -539,8 +512,6 @@ Google Cloud Platform
     setCurrentDirectory(directory)
     setCurrentMenu('directory')
     setNeedsInputDivider(false)
-    await showBanner()
-    
     await addLine(createBorder(`${directory.toUpperCase()}`), 'normal')
     await addLine('')
     
@@ -582,7 +553,6 @@ Google Cloud Platform
       return
     }
     
-    await showBanner()
     await addLine(createBorder(fileData.title.toUpperCase()), 'normal')
     await addLine('')
     
@@ -897,9 +867,31 @@ Google Cloud Platform
 
   return (
     <div className="min-h-screen bg-terminal-bg p-4 scanline relative">
+      {/* Fixed header */}
+      <div className="fixed top-0 left-0 right-0 flex justify-center z-50 border-b border-terminal-green-dim shadow-md bg-black">
+        <div className="w-full max-w-[800px] p-4 font-mono text-sm">
+          {asciiArt.map((line, i) => (
+            <div key={i} className="text-terminal-green whitespace-pre leading-tight text-xs">
+              {line}
+            </div>
+          ))}
+          <div className={`text-terminal-amber mt-2 ${isGlitching ? 'animate-flicker' : 'animate-pulse-slow'}`}>{taglines[currentTaglineIndex]}</div>
+          <div className="mt-2 text-terminal-green">{createBorder('MAIN MENU')}</div>
+          <div className="mt-2 space-y-1">
+            <div onClick={() => handleLineClick('1')} className="hover:text-terminal-amber cursor-pointer">1. Experience - Professional work history</div>
+            <div onClick={() => handleLineClick('2')} className="hover:text-terminal-amber cursor-pointer">2. Skills - Technical expertise &amp; proficiencies</div>
+            <div onClick={() => handleLineClick('3')} className="hover:text-terminal-amber cursor-pointer">3. Projects - Notable work &amp; contributions</div>
+            <div onClick={() => handleLineClick('4')} className="hover:text-terminal-amber cursor-pointer">4. Education - Academic background &amp; certifications</div>
+            <div onClick={() => handleLineClick('5')} className="hover:text-terminal-amber cursor-pointer">5. Journal - Thoughts on tech and career</div>
+            <div onClick={() => handleLineClick('6')} className="hover:text-terminal-amber cursor-pointer">6. About - Personal introduction</div>
+          </div>
+          <div className="mt-2 text-terminal-green">{createBorder()}</div>
+        </div>
+      </div>
+
       <div
         ref={terminalRef}
-        className="mx-auto w-full max-w-[800px] h-[calc(100vh-12rem)] overflow-y-auto font-mono text-sm scrollbar-hide"
+        className="mx-auto w-full max-w-[800px] mt-[18rem] h-[calc(100vh-30rem)] overflow-y-auto font-mono text-sm scrollbar-hide"
         onClick={() => hiddenInputRef.current?.focus()}
       >
         {terminalLines.map((line, index) => {
