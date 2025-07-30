@@ -897,9 +897,9 @@ Google Cloud Platform
 
   return (
     <div className="min-h-screen bg-terminal-bg p-4 scanline relative">
-      <div 
+      <div
         ref={terminalRef}
-        className="max-w-4xl mx-auto h-[calc(100vh-12rem)] overflow-y-auto font-mono text-sm scrollbar-hide"
+        className="mx-auto w-full max-w-[800px] h-[calc(100vh-12rem)] overflow-y-auto font-mono text-sm scrollbar-hide"
         onClick={() => hiddenInputRef.current?.focus()}
       >
         {terminalLines.map((line, index) => {
@@ -948,8 +948,9 @@ Google Cloud Platform
       
       {/* Sticky command prompt */}
       {systemReady && (
-        <div className="fixed bottom-6 left-0 right-0 bg-black border-t border-terminal-green-dim z-40">
-          {/* Terminal-style navigation buttons */}
+        <div className="fixed bottom-6 left-0 right-0 flex justify-center z-40">
+          <div className="w-full max-w-[800px] bg-black border-t border-terminal-green-dim">
+            {/* Terminal-style navigation buttons */}
           {(isDisplayingContent || currentMenu !== 'main') && (
             <div className="border-b border-terminal-green-dim">
               <div className="px-8 py-2 flex items-center gap-2">
@@ -997,15 +998,18 @@ Google Cloud Platform
             </div>
           </div>
         </div>
+      </div>
       )}
 
       {/* Status Bar */}
-      <div className="fixed bottom-0 left-0 right-0 bg-terminal-green text-black p-1 flex justify-between text-sm z-50">
-        <span className="hidden md:block">{version}</span>
-        <span className="md:block flex-1 text-center md:text-left md:flex-initial">
-          LOSSNER.TECH {audioEnabled && <span className="ml-2">• AUDIO: ON</span>}
-        </span>
-        <span className="hidden md:block">STATUS: {isProcessing ? 'PROCESSING...' : isPlaying ? 'SPEAKING...' : 'READY'}</span>
+      <div className="fixed bottom-0 left-0 right-0 flex justify-center z-50">
+        <div className="w-full max-w-[800px] bg-terminal-green text-black p-1 flex justify-between text-sm">
+          <span className="hidden md:block">{version}</span>
+          <span className="md:block flex-1 text-center md:text-left md:flex-initial">
+            LOSSNER.TECH {audioEnabled && <span className="ml-2">• AUDIO: ON</span>}
+          </span>
+          <span className="hidden md:block">STATUS: {isProcessing ? 'PROCESSING...' : isPlaying ? 'SPEAKING...' : 'READY'}</span>
+        </div>
       </div>
       
       <input
@@ -1029,3 +1033,4 @@ Google Cloud Platform
 }
 
 export default TerminalResume
+
