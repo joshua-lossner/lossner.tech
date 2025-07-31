@@ -868,8 +868,8 @@ Google Cloud Platform
   return (
     <div className="min-h-screen bg-terminal-bg p-4 scanline relative">
       {/* Fixed header */}
-      <div className="fixed top-0 left-0 right-0 flex justify-center z-50 border-b border-terminal-green-dim shadow-md bg-black">
-        <div className="w-full max-w-[800px] p-4 font-mono text-sm">
+      <div className="fixed top-0 left-0 right-0 flex justify-center z-50 shadow-md bg-black">
+        <div className="w-full max-w-[800px] p-4 font-mono text-sm border-b border-terminal-green-dim">
           {asciiArt.map((line, i) => (
             <div key={i} className="text-terminal-green whitespace-pre leading-tight text-xs">
               {line}
