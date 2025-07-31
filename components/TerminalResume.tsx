@@ -869,7 +869,7 @@ Google Cloud Platform
     <div className="min-h-screen bg-terminal-bg p-4 scanline relative">
       {/* Fixed header */}
       <div className="fixed top-0 left-0 right-0 flex justify-center z-50 shadow-md bg-black">
-        <div className="w-full max-w-[800px] p-4 font-mono text-sm border-b border-terminal-green-dim">
+        <div className="w-full max-w-[800px] px-4 pt-4 pb-0 font-mono text-sm border-b border-terminal-green-dim">
           {asciiArt.map((line, i) => (
             <div key={i} className="text-terminal-green whitespace-pre leading-tight text-xs">
               {line}
@@ -940,7 +940,7 @@ Google Cloud Platform
       
       {/* Sticky command prompt */}
       {systemReady && (
-        <div className="fixed bottom-6 left-0 right-0 flex justify-center z-40">
+        <div className="fixed bottom-[5px] left-0 right-0 flex justify-center z-40">
           <div className="w-full max-w-[800px] bg-black border-t border-terminal-green-dim">
             {/* Terminal-style navigation buttons */}
           {(isDisplayingContent || currentMenu !== 'main') && (
