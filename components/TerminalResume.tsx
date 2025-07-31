@@ -891,7 +891,7 @@ Google Cloud Platform
 
       <div
         ref={terminalRef}
-        className="mx-auto w-full max-w-[800px] mt-[18rem] h-[calc(100vh-30rem)] overflow-y-auto font-mono text-sm scrollbar-hide"
+        className="mx-auto w-full max-w-[800px] mt-[18rem] h-[calc(100vh-30rem)] overflow-y-auto font-mono text-sm scrollbar-hide pt-[5px] pb-[5px]"
         onClick={() => hiddenInputRef.current?.focus()}
       >
         {terminalLines.map((line, index) => {
