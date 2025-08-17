@@ -167,6 +167,18 @@ async function fetchDirectoryListing(directory: string) {
       if (a.order !== b.order) return a.order - b.order;
       return a.title.localeCompare(b.title);
     });
+  } else if (directory === 'Education') {
+    // For Education, sort by period (most recent first)
+    files.sort((a, b) => {
+      const aDate = extractEducationEndDate(a.metadata?.period || '');
+      const bDate = extractEducationEndDate(b.metadata?.period || '');
+      
+      if (aDate !== bDate) return bDate - aDate; // Most recent first
+      
+      // Fallback to order, then title
+      if (a.order !== b.order) return a.order - b.order;
+      return a.title.localeCompare(b.title);
+    });
   } else {
     // For other directories, sort by order, then by title
     files.sort((a, b) => {
@@ -299,6 +311,20 @@ function getFallbackDirectoryContent(directory: string) {
         order: 1,
         metadata: { institution: 'University of Phoenix Online', period: 'September 2008 - May 2010' },
         downloadUrl: null
+      },
+      {
+        name: 'university-phoenix-bachelors.md',
+        title: 'Bachelor of Science in Information Technology',
+        order: 2,
+        metadata: { institution: 'University of Phoenix Online', period: 'September 2003 - December 2005' },
+        downloadUrl: null
+      },
+      {
+        name: 'additional-coursework.md',
+        title: 'Additional Technical Coursework',
+        order: 3,
+        metadata: { institution: 'Various Institutions', period: '1996 - 2003' },
+        downloadUrl: null
       }
     ],
     'Journal': [
@@ -344,9 +370,63 @@ function getFallbackDirectoryContent(directory: string) {
       if (a.order !== b.order) return a.order - b.order;
       return a.title.localeCompare(b.title);
     });
+  } else if (directory === 'Education') {
+    // For Education, sort by period (most recent first)
+    files.sort((a, b) => {
+      const aDate = extractEducationEndDate(a.metadata?.period || '');
+      const bDate = extractEducationEndDate(b.metadata?.period || '');
+      
+      if (aDate !== bDate) return bDate - aDate; // Most recent first
+      
+      // Fallback to order, then title
+      if (a.order !== b.order) return a.order - b.order;
+      return a.title.localeCompare(b.title);
+    });
   }
   
   return NextResponse.json({ files });
+}
+
+// Helper function to extract end date from education period for sorting
+function extractEducationEndDate(period: string): number {
+  if (!period) return 0;
+  
+  // Handle "Present" or ongoing education
+  if (period.toLowerCase().includes('present') || period.toLowerCase().includes('ongoing')) {
+    return Date.now();
+  }
+  
+  // Extract the end date from formats like "September 2008 - May 2010" or "2003 - 2005"
+  const parts = period.split('-');
+  if (parts.length < 2) {
+    // Single date, use it as both start and end
+    return parseEducationDate(period);
+  }
+  
+  const endDateStr = parts[parts.length - 1].trim();
+  return parseEducationDate(endDateStr);
+}
+
+// Helper function to parse education dates
+function parseEducationDate(dateStr: string): number {
+  // Try to parse formats like "May 2010" or "December 2005"
+  const monthYearMatch = dateStr.match(/(\w+)\s+(\d{4})/);
+  if (monthYearMatch) {
+    const [, month, year] = monthYearMatch;
+    const date = new Date(`${month} 1, ${year}`);
+    return date.getTime();
+  }
+  
+  // Try year only format like "2005"
+  const yearOnlyMatch = dateStr.match(/(\d{4})/);
+  if (yearOnlyMatch) {
+    const [, year] = yearOnlyMatch;
+    return new Date(`December 31, ${year}`).getTime();
+  }
+  
+  // Fallback: try to parse as-is
+  const date = new Date(dateStr);
+  return isNaN(date.getTime()) ? 0 : date.getTime();
 }
 
 // Helper function to extract end date from project timeline/period for sorting
