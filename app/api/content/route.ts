@@ -125,11 +125,15 @@ async function fetchDirectoryListing(directory: string) {
           const orderMatch = frontmatter.match(/order:\s*(\d+)/);
           const companyMatch = frontmatter.match(/company:\s*"?([^"\n]+)"?/);
           const periodMatch = frontmatter.match(/period:\s*"?([^"\n]+)"?/);
+          const statusMatch = frontmatter.match(/status:\s*"?([^"\n]+)"?/);
+          const timelineMatch = frontmatter.match(/timeline:\s*"?([^"\n]+)"?/);
           
           if (titleMatch) title = titleMatch[1];
           if (orderMatch) order = parseInt(orderMatch[1]);
           if (companyMatch) metadata.company = companyMatch[1];
           if (periodMatch) metadata.period = periodMatch[1];
+          if (statusMatch) metadata.status = statusMatch[1];
+          if (timelineMatch) metadata.timeline = timelineMatch[1];
         }
         
         return {
@@ -142,11 +146,34 @@ async function fetchDirectoryListing(directory: string) {
       })
   );
 
-  // Sort by order, then by title
-  files.sort((a, b) => {
-    if (a.order !== b.order) return a.order - b.order;
-    return a.title.localeCompare(b.title);
-  });
+  // Sort files based on directory type
+  if (directory === 'Projects') {
+    // For Projects, sort by status (In Progress first), then by timeline/period (most recent first)
+    files.sort((a, b) => {
+      // First priority: In Progress status
+      const aInProgress = a.metadata?.status?.toLowerCase() === 'in progress';
+      const bInProgress = b.metadata?.status?.toLowerCase() === 'in progress';
+      
+      if (aInProgress && !bInProgress) return -1;
+      if (!aInProgress && bInProgress) return 1;
+      
+      // Second priority: Sort by timeline or period (most recent first)
+      const aDate = extractProjectDate(a.metadata?.timeline || a.metadata?.period || '');
+      const bDate = extractProjectDate(b.metadata?.timeline || b.metadata?.period || '');
+      
+      if (aDate !== bDate) return bDate - aDate; // Most recent first
+      
+      // Fallback to order, then title
+      if (a.order !== b.order) return a.order - b.order;
+      return a.title.localeCompare(b.title);
+    });
+  } else {
+    // For other directories, sort by order, then by title
+    files.sort((a, b) => {
+      if (a.order !== b.order) return a.order - b.order;
+      return a.title.localeCompare(b.title);
+    });
+  }
 
   return NextResponse.json({ files });
 }
@@ -244,10 +271,24 @@ function getFallbackDirectoryContent(directory: string) {
     ],
     'Projects': [
       {
+        name: 'devflow-cli.md',
+        title: 'DevFlow CLI',
+        order: 1,
+        metadata: { status: 'Active', timeline: 'Present' },
+        downloadUrl: null
+      },
+      {
         name: 'atlassian-enterprise-migration.md',
         title: 'Atlassian Server to Data Center Migration',
-        order: 1,
-        metadata: { company: 'Berkley Technology Services', period: '2020-2021' },
+        order: 2,
+        metadata: { company: 'Berkley Technology Services', period: '2020-2021', status: 'Completed' },
+        downloadUrl: null
+      },
+      {
+        name: 'servicenow-atlassian-integration.md',
+        title: 'ServiceNow-Atlassian Integration',
+        order: 3,
+        metadata: { period: '2018-2020', status: 'Completed' },
         downloadUrl: null
       }
     ],
@@ -280,8 +321,60 @@ function getFallbackDirectoryContent(directory: string) {
     ]
   };
 
-  const files = fallbackData[directory] || [];
+  let files = fallbackData[directory] || [];
+  
+  // Apply the same sorting logic as the main function
+  if (directory === 'Projects') {
+    // For Projects, sort by status (In Progress first), then by timeline/period (most recent first)
+    files.sort((a, b) => {
+      // First priority: In Progress status
+      const aInProgress = a.metadata?.status?.toLowerCase() === 'in progress';
+      const bInProgress = b.metadata?.status?.toLowerCase() === 'in progress';
+      
+      if (aInProgress && !bInProgress) return -1;
+      if (!aInProgress && bInProgress) return 1;
+      
+      // Second priority: Sort by timeline or period (most recent first)
+      const aDate = extractProjectDate(a.metadata?.timeline || a.metadata?.period || '');
+      const bDate = extractProjectDate(b.metadata?.timeline || b.metadata?.period || '');
+      
+      if (aDate !== bDate) return bDate - aDate; // Most recent first
+      
+      // Fallback to order, then title
+      if (a.order !== b.order) return a.order - b.order;
+      return a.title.localeCompare(b.title);
+    });
+  }
+  
   return NextResponse.json({ files });
+}
+
+// Helper function to extract end date from project timeline/period for sorting
+function extractProjectDate(dateStr: string): number {
+  if (!dateStr) return 0;
+  
+  // Handle "Active" or "In Progress" status - treat as current time
+  if (dateStr.toLowerCase().includes('active') || dateStr.toLowerCase().includes('in progress')) {
+    return Date.now();
+  }
+  
+  // Handle "Present" case - return current time
+  if (dateStr.toLowerCase().includes('present')) {
+    return Date.now();
+  }
+  
+  // Extract years from formats like "2020-2021" or "2020 - 2021" or just "2021"
+  const yearMatches = dateStr.match(/\d{4}/g);
+  if (yearMatches && yearMatches.length > 0) {
+    // Get the last (most recent) year
+    const lastYear = yearMatches[yearMatches.length - 1];
+    // Use December 31st of that year for sorting
+    return new Date(`December 31, ${lastYear}`).getTime();
+  }
+  
+  // Fallback: try to parse as-is
+  const date = new Date(dateStr);
+  return isNaN(date.getTime()) ? 0 : date.getTime();
 }
 
 function getFallbackFileContent(directory: string, filename: string) {

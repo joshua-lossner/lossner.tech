@@ -519,12 +519,34 @@ Google Cloud Platform
         await addLine('No content available.', 'processing')
       } else {
         files.forEach((file: any, index: number) => {
-          const displayTitle = file.metadata?.company 
-            ? `${file.title} - ${file.metadata.company}`
-            : file.title
-          const displayPeriod = file.metadata?.period ? ` (${file.metadata.period})` : ''
+          let displayTitle = file.title;
+          let displayInfo = '';
           
-          addLine(`${index + 1}. ${displayTitle}${displayPeriod}`, 'normal', false, `${index + 1}`)
+          // Special handling for Projects directory
+          if (directory === 'Projects') {
+            // Add status indicator for In Progress projects
+            if (file.metadata?.status?.toLowerCase() === 'in progress') {
+              displayTitle = `🚧 ${file.title}`;
+            } else if (file.metadata?.status?.toLowerCase() === 'active') {
+              displayTitle = `✨ ${file.title}`;
+            }
+            
+            // Show timeline or period
+            const timeInfo = file.metadata?.timeline || file.metadata?.period;
+            if (timeInfo) {
+              displayInfo = ` (${timeInfo})`;
+            }
+          } else {
+            // Original logic for other directories
+            if (file.metadata?.company) {
+              displayTitle = `${file.title} - ${file.metadata.company}`;
+            }
+            if (file.metadata?.period) {
+              displayInfo = ` (${file.metadata.period})`;
+            }
+          }
+          
+          addLine(`${index + 1}. ${displayTitle}${displayInfo}`, 'normal', false, `${index + 1}`)
         })
       }
     }
