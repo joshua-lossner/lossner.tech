@@ -1215,12 +1215,12 @@ Google Cloud Platform
       )}
 
       {/* Status Bar */}
-      <div className="fixed bottom-0 left-0 right-0 bg-terminal-green text-black p-1 flex justify-between text-sm z-50">
-        <span className="hidden md:block">{version}</span>
-        <span className="md:block flex-1 text-center md:text-left md:flex-initial">
+      <div className="hidden md:block fixed bottom-0 left-0 right-0 bg-terminal-green text-black p-1 flex justify-between text-sm z-50">
+        <span>{version}</span>
+        <span className="flex-1 text-center md:text-left md:flex-initial">
           LOSSNER.TECH {audioEnabled && <span className="ml-2">• AUDIO: ON</span>}
         </span>
-        <span className="hidden md:block">STATUS: {isProcessing ? 'PROCESSING...' : isPlaying ? 'SPEAKING...' : 'READY'}</span>
+        <span>STATUS: {isProcessing ? 'PROCESSING...' : isPlaying ? 'SPEAKING...' : 'READY'}</span>
       </div>
       
       <input
