@@ -943,11 +943,144 @@ Google Cloud Platform
     }
   }
 
+  // Mobile card view component
+  const renderMobileCard = (title: string, subtitle: string, onClick: () => void) => (
+    <div 
+      onClick={onClick}
+      className="bg-black border border-terminal-green p-4 mb-3 cursor-pointer hover:bg-terminal-green hover:bg-opacity-10 transition-colors"
+    >
+      <div className="text-terminal-green font-bold text-sm">{title}</div>
+      {subtitle && <div className="text-terminal-green-dim text-xs mt-1">{subtitle}</div>}
+    </div>
+  )
+
+  // Mobile main menu cards
+  const renderMobileMainMenu = () => (
+    <div className="max-w-md mx-auto p-4 space-y-3">
+      <div className="text-center mb-6">
+        <div className="text-terminal-green text-lg font-bold mb-2">LOSSNER.TECH</div>
+        <div className="text-terminal-amber text-xs">
+          {taglines[currentTaglineIndex]}
+        </div>
+      </div>
+      
+      {renderMobileCard('Experience', 'Professional work history', () => handleLineClick('1'))}
+      {renderMobileCard('Skills', 'Technical expertise & proficiencies', () => handleLineClick('2'))}
+      {renderMobileCard('Projects', 'Notable work & contributions', () => handleLineClick('3'))}
+      {renderMobileCard('Education', 'Academic background & certifications', () => handleLineClick('4'))}
+      {renderMobileCard('Journal', 'Thoughts on tech and career', () => handleLineClick('5'))}
+      {renderMobileCard('About', 'Personal introduction', () => handleLineClick('6'))}
+    </div>
+  )
+
+  // Mobile directory listing (for Experience, Projects, etc.)
+  const renderMobileDirectoryCards = () => (
+    <div className="max-w-md mx-auto p-4 space-y-3">
+      <div className="text-center mb-6">
+        <div className="text-terminal-green text-lg font-bold mb-2">{currentDirectory.toUpperCase()}</div>
+        <button 
+          onClick={() => handleLineClick('/menu')}
+          className="text-terminal-amber text-xs hover:text-terminal-green transition-colors"
+        >
+          ← Back to Menu
+        </button>
+      </div>
+      
+      {directoryFiles.map((file: any, index: number) => {
+        let title = file.title;
+        let subtitle = '';
+        
+        // Apply same display logic as terminal view
+        if (currentDirectory === 'Projects') {
+          if (file.metadata?.status?.toLowerCase() === 'in progress') {
+            title = `🚧 ${file.title}`;
+          } else if (file.metadata?.status?.toLowerCase() === 'active') {
+            title = `✨ ${file.title}`;
+          }
+          const timeInfo = file.metadata?.timeline || file.metadata?.period;
+          if (timeInfo) {
+            subtitle = timeInfo;
+          }
+        } else if (currentDirectory === 'Education') {
+          const yearMatches = file.metadata?.period?.match(/\d{4}/g);
+          if (yearMatches && yearMatches.length > 0) {
+            if (yearMatches.length >= 2) {
+              subtitle = `${yearMatches[0]}-${yearMatches[yearMatches.length - 1]}`;
+            } else {
+              subtitle = yearMatches[0];
+            }
+          }
+        } else if (currentDirectory === 'Experience') {
+          if (file.metadata?.period) {
+            if (file.metadata.period.toLowerCase().includes('present')) {
+              const yearMatches = file.metadata.period.match(/\d{4}/g);
+              if (yearMatches && yearMatches.length > 0) {
+                subtitle = `${yearMatches[0]}-Present`;
+              } else {
+                subtitle = 'Present';
+              }
+            } else {
+              const yearMatches = file.metadata.period.match(/\d{4}/g);
+              if (yearMatches && yearMatches.length > 0) {
+                if (yearMatches.length >= 2) {
+                  subtitle = `${yearMatches[0]}-${yearMatches[yearMatches.length - 1]}`;
+                } else {
+                  subtitle = yearMatches[0];
+                }
+              }
+            }
+          }
+        } else {
+          // Other directories
+          if (file.metadata?.period) {
+            subtitle = file.metadata.period;
+          }
+        }
+        
+        return (
+          <div key={index}>
+            {renderMobileCard(
+              title, 
+              subtitle, 
+              () => handleLineClick(`${index + 1}`)
+            )}
+          </div>
+        );
+      })}
+    </div>
+  )
+
   return (
     <div className="min-h-screen bg-terminal-bg p-2 md:p-4 scanline relative">
+      {/* Mobile card view */}
+      <div className="md:hidden">
+        {currentMenu === 'main' && !isDisplayingContent && renderMobileMainMenu()}
+        {currentMenu === 'directory' && !isDisplayingContent && renderMobileDirectoryCards()}
+        {isDisplayingContent && (
+          <div className="max-w-md mx-auto p-4">
+            <div className="bg-black border border-terminal-green p-4 mb-4">
+              <button 
+                onClick={() => handleLineClick('/menu')}
+                className="text-terminal-amber text-xs hover:text-terminal-green transition-colors mb-4"
+              >
+                ← Back to Menu
+              </button>
+              <div className="text-terminal-green text-sm space-y-2">
+                {terminalLines.filter(line => line.isMarkdown).map((line, index) => (
+                  <div key={index} className="prose prose-invert prose-sm max-w-none prose-headings:text-terminal-green prose-strong:text-terminal-amber prose-a:text-terminal-green">
+                    <ReactMarkdown>{line.text}</ReactMarkdown>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Desktop terminal view */}
       <div 
         ref={terminalRef}
-        className="max-w-4xl mx-auto h-[calc(100vh-3rem)] md:h-[calc(100vh-12rem)] overflow-y-auto font-mono text-xs md:text-sm scrollbar-hide"
+        className="hidden md:block max-w-4xl mx-auto h-[calc(100vh-12rem)] overflow-y-auto font-mono text-sm scrollbar-hide"
         onClick={() => hiddenInputRef.current?.focus()}
       >
         {terminalLines.map((line, index) => {
