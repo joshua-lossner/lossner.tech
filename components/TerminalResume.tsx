@@ -944,10 +944,10 @@ Google Cloud Platform
   }
 
   return (
-    <div className="min-h-screen bg-terminal-bg p-4 scanline relative">
+    <div className="min-h-screen bg-terminal-bg p-2 md:p-4 scanline relative">
       <div 
         ref={terminalRef}
-        className="max-w-4xl mx-auto h-[calc(100vh-12rem)] overflow-y-auto font-mono text-sm scrollbar-hide"
+        className="max-w-4xl mx-auto h-[calc(100vh-3rem)] md:h-[calc(100vh-12rem)] overflow-y-auto font-mono text-xs md:text-sm scrollbar-hide"
         onClick={() => hiddenInputRef.current?.focus()}
       >
         {terminalLines.map((line, index) => {
@@ -973,7 +973,7 @@ Google Cloud Platform
                 ${line.type === 'processing' ? 'text-terminal-amber' : ''}
                 ${line.type === 'separator' ? 'text-gray-600' : ''}
                 ${line.type === 'user-input' ? 'text-terminal-amber' : ''}
-                ${line.type === 'ascii-art' ? 'text-terminal-green whitespace-pre text-xs leading-tight' : ''}
+                ${line.type === 'ascii-art' ? 'text-terminal-green whitespace-pre text-[0.6rem] md:text-xs leading-tight' : ''}
                 ${line.type === 'ai-response' ? 'text-green-300' : ''}
                 ${line.clickableCommand ? 'hover:text-terminal-amber cursor-pointer transition-colors' : ''}
                 mb-1
@@ -994,9 +994,9 @@ Google Cloud Platform
         })}
       </div>
       
-      {/* Sticky command prompt */}
+      {/* Sticky command prompt - hidden on mobile */}
       {systemReady && (
-        <div className="fixed bottom-6 left-0 right-0 bg-black border-t border-terminal-green-dim z-40">
+        <div className="hidden md:block fixed bottom-6 left-0 right-0 bg-black border-t border-terminal-green-dim z-40">
           {/* Terminal-style navigation buttons */}
           {(isDisplayingContent || currentMenu !== 'main') && (
             <div className="border-b border-terminal-green-dim">
