@@ -552,8 +552,35 @@ Google Cloud Platform
                 }
               }
             }
+          } else if (directory === 'Experience') {
+            // Special handling for Experience directory - show title only
+            displayTitle = file.title;
+            
+            // Extract years only from period
+            if (file.metadata?.period) {
+              // Check if period contains "Present"
+              if (file.metadata.period.toLowerCase().includes('present')) {
+                const yearMatches = file.metadata.period.match(/\d{4}/g);
+                if (yearMatches && yearMatches.length > 0) {
+                  displayInfo = ` (${yearMatches[0]}-Present)`;
+                } else {
+                  displayInfo = ` (Present)`;
+                }
+              } else {
+                // Extract year numbers
+                const yearMatches = file.metadata.period.match(/\d{4}/g);
+                if (yearMatches && yearMatches.length > 0) {
+                  // Show year range or single year
+                  if (yearMatches.length >= 2) {
+                    displayInfo = ` (${yearMatches[0]}-${yearMatches[yearMatches.length - 1]})`;
+                  } else {
+                    displayInfo = ` (${yearMatches[0]})`;
+                  }
+                }
+              }
+            }
           } else {
-            // Original logic for other directories (Experience, etc.)
+            // Original logic for other directories
             if (file.metadata?.company) {
               displayTitle = `${file.title} - ${file.metadata.company}`;
             }

@@ -194,6 +194,18 @@ async function fetchDirectoryListing(directory: string) {
       if (a.order !== b.order) return a.order - b.order;
       return a.title.localeCompare(b.title);
     });
+  } else if (directory === 'Experience') {
+    // For Experience, sort by period (most recent first)
+    files.sort((a, b) => {
+      const aDate = extractExperienceEndDate(a.metadata?.period || '');
+      const bDate = extractExperienceEndDate(b.metadata?.period || '');
+      
+      if (aDate !== bDate) return bDate - aDate; // Most recent first
+      
+      // Fallback to order, then title
+      if (a.order !== b.order) return a.order - b.order;
+      return a.title.localeCompare(b.title);
+    });
   } else {
     // For other directories, sort by order, then by title
     files.sort((a, b) => {
@@ -397,9 +409,70 @@ function getFallbackDirectoryContent(directory: string) {
       if (a.order !== b.order) return a.order - b.order;
       return a.title.localeCompare(b.title);
     });
+  } else if (directory === 'Experience') {
+    // For Experience, sort by period (most recent first)
+    files.sort((a, b) => {
+      const aDate = extractExperienceEndDate(a.metadata?.period || '');
+      const bDate = extractExperienceEndDate(b.metadata?.period || '');
+      
+      if (aDate !== bDate) return bDate - aDate; // Most recent first
+      
+      // Fallback to order, then title
+      if (a.order !== b.order) return a.order - b.order;
+      return a.title.localeCompare(b.title);
+    });
   }
   
   return NextResponse.json({ files });
+}
+
+// Helper function to extract end date from experience period for sorting
+function extractExperienceEndDate(period: string): number {
+  if (!period) return 0;
+  
+  // Handle "Present" or current position
+  if (period.toLowerCase().includes('present') || period.toLowerCase().includes('current')) {
+    return Date.now();
+  }
+  
+  // Handle date ranges by looking for " - " (space-dash-space) as separator
+  // This handles formats like "June 2021 - June 2022" or "2018 - 2021"
+  const rangeSeparator = ' - ';
+  if (period.includes(rangeSeparator)) {
+    const parts = period.split(rangeSeparator);
+    const endDateStr = parts[parts.length - 1].trim();
+    return parseExperienceDate(endDateStr);
+  }
+  
+  // Single date, use it as both start and end
+  return parseExperienceDate(period);
+}
+
+// Helper function to parse experience dates
+function parseExperienceDate(dateStr: string): number {
+  // Handle "Present" case
+  if (dateStr.toLowerCase().includes('present')) {
+    return Date.now();
+  }
+  
+  // Try to parse formats like "June 2022" or "September 2015"
+  const monthYearMatch = dateStr.match(/(\w+)\s+(\d{4})/);
+  if (monthYearMatch) {
+    const [, month, year] = monthYearMatch;
+    const date = new Date(`${month} 1, ${year}`);
+    return date.getTime();
+  }
+  
+  // Try year only format like "2021"
+  const yearOnlyMatch = dateStr.match(/(\d{4})/);
+  if (yearOnlyMatch) {
+    const [, year] = yearOnlyMatch;
+    return new Date(`December 31, ${year}`).getTime();
+  }
+  
+  // Fallback: try to parse as-is
+  const date = new Date(dateStr);
+  return isNaN(date.getTime()) ? 0 : date.getTime();
 }
 
 // Helper function to extract end date from education period for sorting
