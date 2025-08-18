@@ -572,6 +572,26 @@ Google Cloud Platform
     await addLine('')
   }
 
+  // Show About content directly without directory listing
+  const showAboutDirectly = async () => {
+    try {
+      // First get the About directory to find the actual filename
+      const directoryData = await fetchDirectoryFiles('About')
+      if (directoryData && directoryData.length > 0) {
+        // Use the first (and only) file in the About directory
+        const aboutFile = directoryData[0]
+        await showFileContent('About', aboutFile.name)
+      } else {
+        // Fallback if directory fetch fails
+        await showFileContent('About', 'joshua-lossner-profile.md')
+      }
+    } catch (error) {
+      console.error('Error loading About content:', error)
+      // Fallback if everything fails
+      await showFileContent('About', 'joshua-lossner-profile.md')
+    }
+  }
+
   // Show file content (like chapter in coherenceism.info)
   const showFileContent = async (directory: string, filename: string) => {
     setTerminalLines([])
@@ -708,7 +728,7 @@ Google Cloud Platform
           await showDirectoryListing('Journal')
           return
         case '6':
-          await showFileContent('About', 'joshua-lossner-profile.md')
+          await showAboutDirectly()
           return
       }
     }
@@ -753,7 +773,7 @@ Google Cloud Platform
         break
       case '/about':
       case 'about':
-        await showFileContent('About', 'joshua-lossner-profile.md')
+        await showAboutDirectly()
         break
       case '/experience':
       case 'experience':
