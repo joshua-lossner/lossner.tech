@@ -121,16 +121,17 @@ async function fetchDirectoryListing(directory: string) {
           const bodyContent = frontmatterMatch[2];
           
           // Extract metadata from frontmatter
-          const titleMatch = frontmatter.match(/title:\s*"?([^"\n]+)"?/);
-          const orderMatch = frontmatter.match(/order:\s*(\d+)/);
-          const companyMatch = frontmatter.match(/company:\s*"?([^"\n]+)"?/);
-          const periodMatch = frontmatter.match(/period:\s*"?([^"\n]+)"?/);
-          const statusMatch = frontmatter.match(/status:\s*"?([^"\n]+)"?/);
-          const timelineMatch = frontmatter.match(/timeline:\s*"?([^"\n]+)"?/);
-          const institutionMatch = frontmatter.match(/institution:\s*"?([^"\n]+)"?/);
-          const schoolMatch = frontmatter.match(/school:\s*"?([^"\n]+)"?/);
-          const startMatch = frontmatter.match(/start:\s*"?([^"\n]+)"?/);
-          const endMatch = frontmatter.match(/end:\s*"?([^"\n]+)"?/);
+          // Use more precise regex that only matches on the same line
+          const titleMatch = frontmatter.match(/^title:\s*"?([^"\n]+)"?$/m);
+          const orderMatch = frontmatter.match(/^order:\s*(\d+)$/m);
+          const companyMatch = frontmatter.match(/^company:\s*"?([^"\n]+)"?$/m);
+          const periodMatch = frontmatter.match(/^period:\s*"?([^"\n]+)"?$/m);
+          const statusMatch = frontmatter.match(/^status:\s*"?([^"\n]+)"?$/m);
+          const timelineMatch = frontmatter.match(/^timeline:\s*"?([^"\n]+)"?$/m);
+          const institutionMatch = frontmatter.match(/^institution:\s*"?([^"\n]+)"?$/m);
+          const schoolMatch = frontmatter.match(/^school:\s*"?([^"\n]+)"?$/m);
+          const startMatch = frontmatter.match(/^start:\s*"?([^"\n]+)"?$/m);
+          const endMatch = frontmatter.match(/^end:\s*"?([^"\n]+)"?$/m);
           
           if (titleMatch) title = titleMatch[1];
           if (orderMatch) order = parseInt(orderMatch[1]);
@@ -148,6 +149,25 @@ async function fetchDirectoryListing(directory: string) {
             metadata.period = startMatch[1];
           } else if (endMatch) {
             metadata.period = endMatch[1];
+          }
+          
+          // Special handling for Experience directory - if title is empty or invalid, derive from filename
+          if (directory === 'Experience' && (!title || title.startsWith('company:'))) {
+            // Try to extract title from filename
+            // Format: "06_mumo-systems-senior-solutions-consultant.md" -> "Senior Solutions Consultant"
+            const filename = item.name.replace(/^\d+_/, '').replace('.md', '');
+            const parts = filename.split('-');
+            
+            // Remove company name parts and capitalize remaining words
+            if (filename.includes('mumo-systems-senior-solutions-consultant')) {
+              title = 'Senior Solutions Consultant';
+            } else {
+              // General fallback: capitalize and join the last few parts
+              const titleParts = parts.slice(-3); // Take last 3 parts as likely job title
+              title = titleParts.map(word => 
+                word.charAt(0).toUpperCase() + word.slice(1)
+              ).join(' ');
+            }
           }
         }
         
