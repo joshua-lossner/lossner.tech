@@ -890,11 +890,28 @@ Google Cloud Platform
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [currentInput, isDisplayingContent, systemReady, isProcessing])
+  }, [currentInput, isDisplayingContent, systemReady, isProcessing, needsInputDivider])
 
-  const handleLineClick = (command: string) => {
+  const handleLineClick = async (command: string) => {
     if (command && !isProcessing) {
-      setCurrentInput(command)
+      // For numbered menu items, execute immediately
+      setIsProcessing(true)
+      
+      // Add divider before first user input after main menu if needed
+      if (needsInputDivider) {
+        await addLine(createBorder('', '─'), 'separator')
+        setNeedsInputDivider(false)
+      }
+      
+      // Show the command being executed
+      await addLine(`> ${command}`, 'user-input')
+      
+      // Execute the command
+      await processCommand(command)
+      setIsProcessing(false)
+      
+      // Clear the input and refocus
+      setCurrentInput('')
       hiddenInputRef.current?.focus()
     }
   }
