@@ -186,40 +186,6 @@ const TerminalResume = () => {
     await addLine('')
   }
 
-  const showAbout = async () => {
-    setTerminalLines([])
-    setIsDisplayingContent(true)
-    setNeedsInputDivider(false)
-    await showBanner()
-    await addLine(createBorder('ABOUT'), 'normal')
-    await addLine('')
-    const content = `
-# About Joshua Lossner
-
-Senior Software Engineer with 10+ years of experience building scalable systems and leading technical teams. 
-Passionate about clean code, system architecture, and creating elegant solutions to complex problems.
-
-## Core Competencies
-- Full-stack development with modern frameworks
-- Cloud architecture and DevOps practices
-- Team leadership and mentorship
-- Open source contribution
-
-## What I Do
-I specialize in building distributed systems that scale. Whether it's architecting microservices, optimizing database performance, or implementing real-time data pipelines, I focus on creating robust solutions that stand the test of time.
-
-## Philosophy
-I believe in writing code that humans can understand, systems that operators can reason about, and documentation that actually helps. The best technology decisions are the ones that balance innovation with pragmatism.
-
-Currently focused on distributed systems, AI/ML integration, and building developer tools that improve productivity.
-`
-    await addLine(content, 'markdown', true)
-    await addLine('')
-    await addLine(createBorder(), 'separator')
-    await addLine('')
-    await addLine('Type /menu to return to main menu.', 'processing')
-    await addLine('')
-  }
 
   const showExperience = async () => {
     setTerminalLines([])
@@ -742,7 +708,7 @@ Google Cloud Platform
           await showDirectoryListing('Journal')
           return
         case '6':
-          await showAbout()
+          await showDirectoryListing('About')
           return
       }
     }
@@ -787,7 +753,7 @@ Google Cloud Platform
         break
       case '/about':
       case 'about':
-        await showAbout()
+        await showDirectoryListing('About')
         break
       case '/experience':
       case 'experience':
