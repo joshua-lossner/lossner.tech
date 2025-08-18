@@ -47,12 +47,20 @@ const TerminalResume = () => {
       .catch(() => setVersion('v1.0.0'))
   }, [])
 
-  // Auto-scroll to bottom
+  // Auto-scroll to bottom (desktop terminal only)
   useEffect(() => {
     if (terminalRef.current && !isDisplayingContent) {
       terminalRef.current.scrollTop = terminalRef.current.scrollHeight
     }
   }, [terminalLines, isDisplayingContent, currentInput])
+
+  // Prevent auto-scroll on mobile when displaying content
+  useEffect(() => {
+    if (isDisplayingContent) {
+      // On mobile, ensure we stay at the top when content is displayed
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+  }, [isDisplayingContent])
 
   // Focus management
   useEffect(() => {
