@@ -49,23 +49,20 @@ const TerminalResume = () => {
 
   // Auto-scroll to bottom (desktop terminal only)
   useEffect(() => {
+    // Only auto-scroll the terminal ref (desktop view), never on mobile
     if (terminalRef.current && !isDisplayingContent) {
       terminalRef.current.scrollTop = terminalRef.current.scrollHeight
     }
   }, [terminalLines, isDisplayingContent, currentInput])
 
-  // Prevent auto-scroll on mobile when displaying content
-  useEffect(() => {
-    if (isDisplayingContent) {
-      // On mobile, ensure we stay at the top when content is displayed
-      window.scrollTo({ top: 0, behavior: 'smooth' })
-    }
-  }, [isDisplayingContent])
-
-  // Focus management
+  // Focus management (desktop only)
   useEffect(() => {
     if (systemReady && hiddenInputRef.current) {
-      hiddenInputRef.current.focus()
+      // Only focus on desktop to prevent mobile scroll issues
+      const isMobile = window.innerWidth < 768; // md breakpoint
+      if (!isMobile) {
+        hiddenInputRef.current.focus()
+      }
     }
   }, [systemReady])
 
@@ -945,9 +942,12 @@ Google Cloud Platform
       await processCommand(command)
       setIsProcessing(false)
       
-      // Clear the input and refocus
+      // Clear the input and refocus (desktop only)
       setCurrentInput('')
-      hiddenInputRef.current?.focus()
+      const isMobile = window.innerWidth < 768; // md breakpoint
+      if (!isMobile) {
+        hiddenInputRef.current?.focus()
+      }
     }
   }
 
@@ -1089,7 +1089,12 @@ Google Cloud Platform
       <div 
         ref={terminalRef}
         className="hidden md:block max-w-4xl mx-auto h-[calc(100vh-12rem)] overflow-y-auto font-mono text-sm scrollbar-hide"
-        onClick={() => hiddenInputRef.current?.focus()}
+        onClick={() => {
+          const isMobile = window.innerWidth < 768; // md breakpoint
+          if (!isMobile) {
+            hiddenInputRef.current?.focus()
+          }
+        }}
       >
         {terminalLines.map((line, index) => {
           // Replace tagline placeholder with animated tagline
@@ -1203,7 +1208,6 @@ Google Cloud Platform
         value=""
         onChange={() => {}} // Controlled by keyboard handler
         className="absolute -left-full opacity-0"
-        autoFocus
       />
       
       {/* Audio element for speech synthesis */}
