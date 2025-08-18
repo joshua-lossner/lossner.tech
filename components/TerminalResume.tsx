@@ -537,12 +537,20 @@ Google Cloud Platform
               displayInfo = ` (${timeInfo})`;
             }
           } else if (directory === 'Education') {
-            // Special handling for Education directory
-            if (file.metadata?.institution) {
-              displayTitle = `${file.title} - ${file.metadata.institution}`;
-            }
+            // Special handling for Education directory - show title only
+            displayTitle = file.title;
+            
+            // Extract years only from period
             if (file.metadata?.period) {
-              displayInfo = ` (${file.metadata.period})`;
+              const yearMatches = file.metadata.period.match(/\d{4}/g);
+              if (yearMatches && yearMatches.length > 0) {
+                // Show year range (e.g., "2008-2010" or just "2010")
+                if (yearMatches.length >= 2) {
+                  displayInfo = ` (${yearMatches[0]}-${yearMatches[yearMatches.length - 1]})`;
+                } else {
+                  displayInfo = ` (${yearMatches[0]})`;
+                }
+              }
             }
           } else {
             // Original logic for other directories (Experience, etc.)
