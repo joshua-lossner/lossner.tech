@@ -47,17 +47,22 @@ const TerminalResume = () => {
       .catch(() => setVersion('v1.0.0'))
   }, [])
 
-  // Auto-scroll to bottom
+  // Auto-scroll to bottom (desktop terminal only)
   useEffect(() => {
+    // Only auto-scroll the terminal ref (desktop view), never on mobile
     if (terminalRef.current && !isDisplayingContent) {
       terminalRef.current.scrollTop = terminalRef.current.scrollHeight
     }
   }, [terminalLines, isDisplayingContent, currentInput])
 
-  // Focus management
+  // Focus management (desktop only)
   useEffect(() => {
     if (systemReady && hiddenInputRef.current) {
-      hiddenInputRef.current.focus()
+      // Only focus on desktop to prevent mobile scroll issues
+      const isMobile = window.innerWidth < 768; // md breakpoint
+      if (!isMobile) {
+        hiddenInputRef.current.focus()
+      }
     }
   }, [systemReady])
 
@@ -181,40 +186,6 @@ const TerminalResume = () => {
     await addLine('')
   }
 
-  const showAbout = async () => {
-    setTerminalLines([])
-    setIsDisplayingContent(true)
-    setNeedsInputDivider(false)
-    await showBanner()
-    await addLine(createBorder('ABOUT'), 'normal')
-    await addLine('')
-    const content = `
-# About Joshua Lossner
-
-Senior Software Engineer with 10+ years of experience building scalable systems and leading technical teams. 
-Passionate about clean code, system architecture, and creating elegant solutions to complex problems.
-
-## Core Competencies
-- Full-stack development with modern frameworks
-- Cloud architecture and DevOps practices
-- Team leadership and mentorship
-- Open source contribution
-
-## What I Do
-I specialize in building distributed systems that scale. Whether it's architecting microservices, optimizing database performance, or implementing real-time data pipelines, I focus on creating robust solutions that stand the test of time.
-
-## Philosophy
-I believe in writing code that humans can understand, systems that operators can reason about, and documentation that actually helps. The best technology decisions are the ones that balance innovation with pragmatism.
-
-Currently focused on distributed systems, AI/ML integration, and building developer tools that improve productivity.
-`
-    await addLine(content, 'markdown', true)
-    await addLine('')
-    await addLine(createBorder(), 'separator')
-    await addLine('')
-    await addLine('Type /menu to return to main menu.', 'processing')
-    await addLine('')
-  }
 
   const showExperience = async () => {
     setTerminalLines([])
@@ -553,11 +524,77 @@ Google Cloud Platform
         await addLine('No content available.', 'processing')
       } else {
         files.forEach((file: any, index: number) => {
-          const displayTitle = file.title
-          const periodStr = formatPeriod(file.metadata)
-          const displayPeriod = periodStr ? ` (${periodStr})` : ''
-
-          addLine(`${index + 1}. ${displayTitle}${displayPeriod}`, 'normal', false, `${index + 1}`)
+          let displayTitle = file.title;
+          let displayInfo = '';
+          
+          // Special handling for Projects directory
+          if (directory === 'Projects') {
+            // Add status indicator for In Progress projects
+            if (file.metadata?.status?.toLowerCase() === 'in progress') {
+              displayTitle = `🚧 ${file.title}`;
+            } else if (file.metadata?.status?.toLowerCase() === 'active') {
+              displayTitle = `✨ ${file.title}`;
+            }
+            
+            // Show timeline or period
+            const timeInfo = file.metadata?.timeline || file.metadata?.period;
+            if (timeInfo) {
+              displayInfo = ` (${timeInfo})`;
+            }
+          } else if (directory === 'Education') {
+            // Special handling for Education directory - show title only
+            displayTitle = file.title;
+            
+            // Extract years only from period
+            if (file.metadata?.period) {
+              const yearMatches = file.metadata.period.match(/\d{4}/g);
+              if (yearMatches && yearMatches.length > 0) {
+                // Show year range (e.g., "2008-2010" or just "2010")
+                if (yearMatches.length >= 2) {
+                  displayInfo = ` (${yearMatches[0]}-${yearMatches[yearMatches.length - 1]})`;
+                } else {
+                  displayInfo = ` (${yearMatches[0]})`;
+                }
+              }
+            }
+          } else if (directory === 'Experience') {
+            // Special handling for Experience directory - show title only
+            displayTitle = file.title;
+            
+            // Extract years only from period
+            if (file.metadata?.period) {
+              // Check if period contains "Present"
+              if (file.metadata.period.toLowerCase().includes('present')) {
+                const yearMatches = file.metadata.period.match(/\d{4}/g);
+                if (yearMatches && yearMatches.length > 0) {
+                  displayInfo = ` (${yearMatches[0]}-Present)`;
+                } else {
+                  displayInfo = ` (Present)`;
+                }
+              } else {
+                // Extract year numbers
+                const yearMatches = file.metadata.period.match(/\d{4}/g);
+                if (yearMatches && yearMatches.length > 0) {
+                  // Show year range or single year
+                  if (yearMatches.length >= 2) {
+                    displayInfo = ` (${yearMatches[0]}-${yearMatches[yearMatches.length - 1]})`;
+                  } else {
+                    displayInfo = ` (${yearMatches[0]})`;
+                  }
+                }
+              }
+            }
+          } else {
+            // Original logic for other directories
+            if (file.metadata?.company) {
+              displayTitle = `${file.title} - ${file.metadata.company}`;
+            }
+            if (file.metadata?.period) {
+              displayInfo = ` (${file.metadata.period})`;
+            }
+          }
+          
+          addLine(`${index + 1}. ${displayTitle}${displayInfo}`, 'normal', false, `${index + 1}`)
         })
       }
     }
@@ -567,6 +604,26 @@ Google Cloud Platform
     await addLine('')
     await addLine('Type a number to view content or /menu to return.', 'processing')
     await addLine('')
+  }
+
+  // Show About content directly without directory listing
+  const showAboutDirectly = async () => {
+    try {
+      // First get the About directory to find the actual filename
+      const directoryData = await fetchDirectoryFiles('About')
+      if (directoryData && directoryData.length > 0) {
+        // Use the first (and only) file in the About directory
+        const aboutFile = directoryData[0]
+        await showFileContent('About', aboutFile.name)
+      } else {
+        // Fallback if directory fetch fails
+        await showFileContent('About', 'joshua-lossner-profile.md')
+      }
+    } catch (error) {
+      console.error('Error loading About content:', error)
+      // Fallback if everything fails
+      await showFileContent('About', 'joshua-lossner-profile.md')
+    }
   }
 
   // Show file content (like chapter in coherenceism.info)
@@ -706,7 +763,7 @@ Google Cloud Platform
           await showDirectoryListing('Journal')
           return
         case '6':
-          await showAbout()
+          await showAboutDirectly()
           return
       }
     }
@@ -751,7 +808,7 @@ Google Cloud Platform
         break
       case '/about':
       case 'about':
-        await showAbout()
+        await showAboutDirectly()
         break
       case '/experience':
       case 'experience':
@@ -886,21 +943,179 @@ Google Cloud Platform
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [currentInput, isDisplayingContent, systemReady, isProcessing])
+  }, [currentInput, isDisplayingContent, systemReady, isProcessing, needsInputDivider])
 
-  const handleLineClick = (command: string) => {
+  const handleLineClick = async (command: string) => {
     if (command && !isProcessing) {
-      setCurrentInput(command)
-      hiddenInputRef.current?.focus()
+      // For numbered menu items, execute immediately
+      setIsProcessing(true)
+      
+      // Add divider before first user input after main menu if needed
+      if (needsInputDivider) {
+        await addLine(createBorder('', '─'), 'separator')
+        setNeedsInputDivider(false)
+      }
+      
+      // Show the command being executed
+      await addLine(`> ${command}`, 'user-input')
+      
+      // Execute the command
+      await processCommand(command)
+      setIsProcessing(false)
+      
+      // Clear the input and refocus (desktop only)
+      setCurrentInput('')
+      const isMobile = window.innerWidth < 768; // md breakpoint
+      if (!isMobile) {
+        hiddenInputRef.current?.focus()
+      }
     }
   }
 
+  // Mobile card view component
+  const renderMobileCard = (title: string, subtitle: string, onClick: () => void) => (
+    <div 
+      onClick={onClick}
+      className="bg-black border border-terminal-green p-4 mb-3 cursor-pointer hover:bg-terminal-green hover:bg-opacity-10 transition-colors"
+    >
+      <div className="text-terminal-green font-bold text-sm">{title}</div>
+      {subtitle && <div className="text-terminal-green-dim text-xs mt-1">{subtitle}</div>}
+    </div>
+  )
+
+  // Mobile main menu cards
+  const renderMobileMainMenu = () => (
+    <div className="max-w-md mx-auto p-4 space-y-3">
+      <div className="text-center mb-6">
+        <div className="text-terminal-green text-lg font-bold mb-2">LOSSNER.TECH</div>
+        <div className="text-terminal-amber text-xs">
+          {taglines[currentTaglineIndex]}
+        </div>
+      </div>
+      
+      {renderMobileCard('Experience', 'Professional work history', () => handleLineClick('1'))}
+      {renderMobileCard('Skills', 'Technical expertise & proficiencies', () => handleLineClick('2'))}
+      {renderMobileCard('Projects', 'Notable work & contributions', () => handleLineClick('3'))}
+      {renderMobileCard('Education', 'Academic background & certifications', () => handleLineClick('4'))}
+      {renderMobileCard('Journal', 'Thoughts on tech and career', () => handleLineClick('5'))}
+      {renderMobileCard('About', 'Personal introduction', () => handleLineClick('6'))}
+    </div>
+  )
+
+  // Mobile directory listing (for Experience, Projects, etc.)
+  const renderMobileDirectoryCards = () => (
+    <div className="max-w-md mx-auto p-4 space-y-3">
+      <div className="text-center mb-6">
+        <div className="text-terminal-green text-lg font-bold mb-2">{currentDirectory.toUpperCase()}</div>
+        <button 
+          onClick={() => handleLineClick('/menu')}
+          className="text-terminal-amber text-xs hover:text-terminal-green transition-colors"
+        >
+          ← Back to Menu
+        </button>
+      </div>
+      
+      {directoryFiles.map((file: any, index: number) => {
+        let title = file.title;
+        let subtitle = '';
+        
+        // Apply same display logic as terminal view
+        if (currentDirectory === 'Projects') {
+          if (file.metadata?.status?.toLowerCase() === 'in progress') {
+            title = `🚧 ${file.title}`;
+          } else if (file.metadata?.status?.toLowerCase() === 'active') {
+            title = `✨ ${file.title}`;
+          }
+          const timeInfo = file.metadata?.timeline || file.metadata?.period;
+          if (timeInfo) {
+            subtitle = timeInfo;
+          }
+        } else if (currentDirectory === 'Education') {
+          const yearMatches = file.metadata?.period?.match(/\d{4}/g);
+          if (yearMatches && yearMatches.length > 0) {
+            if (yearMatches.length >= 2) {
+              subtitle = `${yearMatches[0]}-${yearMatches[yearMatches.length - 1]}`;
+            } else {
+              subtitle = yearMatches[0];
+            }
+          }
+        } else if (currentDirectory === 'Experience') {
+          if (file.metadata?.period) {
+            if (file.metadata.period.toLowerCase().includes('present')) {
+              const yearMatches = file.metadata.period.match(/\d{4}/g);
+              if (yearMatches && yearMatches.length > 0) {
+                subtitle = `${yearMatches[0]}-Present`;
+              } else {
+                subtitle = 'Present';
+              }
+            } else {
+              const yearMatches = file.metadata.period.match(/\d{4}/g);
+              if (yearMatches && yearMatches.length > 0) {
+                if (yearMatches.length >= 2) {
+                  subtitle = `${yearMatches[0]}-${yearMatches[yearMatches.length - 1]}`;
+                } else {
+                  subtitle = yearMatches[0];
+                }
+              }
+            }
+          }
+        } else {
+          // Other directories
+          if (file.metadata?.period) {
+            subtitle = file.metadata.period;
+          }
+        }
+        
+        return (
+          <div key={index}>
+            {renderMobileCard(
+              title, 
+              subtitle, 
+              () => handleLineClick(`${index + 1}`)
+            )}
+          </div>
+        );
+      })}
+    </div>
+  )
+
   return (
-    <div className="min-h-screen bg-terminal-bg p-4 scanline relative">
+    <div className="min-h-screen bg-terminal-bg p-2 md:p-4 scanline relative">
+      {/* Mobile card view */}
+      <div className="md:hidden">
+        {currentMenu === 'main' && !isDisplayingContent && renderMobileMainMenu()}
+        {currentMenu === 'directory' && !isDisplayingContent && renderMobileDirectoryCards()}
+        {isDisplayingContent && (
+          <div className="max-w-md mx-auto p-4">
+            <div className="bg-black border border-terminal-green p-4 mb-4">
+              <button 
+                onClick={() => handleLineClick('/menu')}
+                className="text-terminal-amber text-xs hover:text-terminal-green transition-colors mb-4"
+              >
+                ← Back to Menu
+              </button>
+              <div className="text-terminal-green text-sm space-y-2">
+                {terminalLines.filter(line => line.isMarkdown).map((line, index) => (
+                  <div key={index} className="prose prose-invert prose-sm max-w-none prose-headings:text-terminal-green prose-strong:text-terminal-amber prose-a:text-terminal-green">
+                    <ReactMarkdown>{line.text}</ReactMarkdown>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Desktop terminal view */}
       <div 
         ref={terminalRef}
-        className="max-w-4xl mx-auto h-[calc(100vh-12rem)] overflow-y-auto font-mono text-sm scrollbar-hide"
-        onClick={() => hiddenInputRef.current?.focus()}
+        className="hidden md:block max-w-4xl mx-auto h-[calc(100vh-12rem)] overflow-y-auto font-mono text-sm scrollbar-hide"
+        onClick={() => {
+          const isMobile = window.innerWidth < 768; // md breakpoint
+          if (!isMobile) {
+            hiddenInputRef.current?.focus()
+          }
+        }}
       >
         {terminalLines.map((line, index) => {
           // Replace tagline placeholder with animated tagline
@@ -925,7 +1140,7 @@ Google Cloud Platform
                 ${line.type === 'processing' ? 'text-terminal-amber' : ''}
                 ${line.type === 'separator' ? 'text-gray-600' : ''}
                 ${line.type === 'user-input' ? 'text-terminal-amber' : ''}
-                ${line.type === 'ascii-art' ? 'text-terminal-green whitespace-pre text-xs leading-tight' : ''}
+                ${line.type === 'ascii-art' ? 'text-terminal-green whitespace-pre text-[0.6rem] md:text-xs leading-tight' : ''}
                 ${line.type === 'ai-response' ? 'text-green-300' : ''}
                 ${line.clickableCommand ? 'hover:text-terminal-amber cursor-pointer transition-colors' : ''}
                 mb-1
@@ -946,9 +1161,9 @@ Google Cloud Platform
         })}
       </div>
       
-      {/* Sticky command prompt */}
+      {/* Sticky command prompt - hidden on mobile */}
       {systemReady && (
-        <div className="fixed bottom-6 left-0 right-0 bg-black border-t border-terminal-green-dim z-40">
+        <div className="hidden md:block fixed bottom-6 left-0 right-0 bg-black border-t border-terminal-green-dim z-40">
           {/* Terminal-style navigation buttons */}
           {(isDisplayingContent || currentMenu !== 'main') && (
             <div className="border-b border-terminal-green-dim">
@@ -1014,7 +1229,6 @@ Google Cloud Platform
         value=""
         onChange={() => {}} // Controlled by keyboard handler
         className="absolute -left-full opacity-0"
-        autoFocus
       />
       
       {/* Audio element for speech synthesis */}

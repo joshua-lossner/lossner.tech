@@ -118,18 +118,57 @@ async function fetchDirectoryListing(directory: string) {
 
         if (frontmatterMatch) {
           const frontmatter = frontmatterMatch[1];
-          const frontmatterLines = frontmatter.split('\n');
-
-          // Extract all frontmatter fields
-          frontmatterLines.forEach(line => {
-            const match = line.match(/^(\w+):\s*"?([^"\n]+)"?$/);
-            if (match) {
-              const [, key, value] = match;
-              if (key === 'title') title = value;
-              else if (key === 'order') order = parseInt(value);
-              else metadata[key] = value;
+          const bodyContent = frontmatterMatch[2];
+          
+          // Extract metadata from frontmatter
+          // Use more precise regex that only matches on the same line
+          const titleMatch = frontmatter.match(/^title:\s*"?([^"\n]+)"?$/m);
+          const orderMatch = frontmatter.match(/^order:\s*(\d+)$/m);
+          const companyMatch = frontmatter.match(/^company:\s*"?([^"\n]+)"?$/m);
+          const periodMatch = frontmatter.match(/^period:\s*"?([^"\n]+)"?$/m);
+          const statusMatch = frontmatter.match(/^status:\s*"?([^"\n]+)"?$/m);
+          const timelineMatch = frontmatter.match(/^timeline:\s*"?([^"\n]+)"?$/m);
+          const institutionMatch = frontmatter.match(/^institution:\s*"?([^"\n]+)"?$/m);
+          const schoolMatch = frontmatter.match(/^school:\s*"?([^"\n]+)"?$/m);
+          const startMatch = frontmatter.match(/^start:\s*"?([^"\n]+)"?$/m);
+          const endMatch = frontmatter.match(/^end:\s*"?([^"\n]+)"?$/m);
+          
+          if (titleMatch) title = titleMatch[1];
+          if (orderMatch) order = parseInt(orderMatch[1]);
+          if (companyMatch) metadata.company = companyMatch[1];
+          if (periodMatch) metadata.period = periodMatch[1];
+          if (statusMatch) metadata.status = statusMatch[1];
+          if (timelineMatch) metadata.timeline = timelineMatch[1];
+          if (institutionMatch) metadata.institution = institutionMatch[1];
+          if (schoolMatch) metadata.institution = schoolMatch[1]; // Use school as institution
+          
+          // Build period from start and end dates if available
+          if (startMatch && endMatch) {
+            metadata.period = `${startMatch[1]} - ${endMatch[1]}`;
+          } else if (startMatch) {
+            metadata.period = startMatch[1];
+          } else if (endMatch) {
+            metadata.period = endMatch[1];
+          }
+          
+          // Special handling for Experience directory - if title is empty or invalid, derive from filename
+          if (directory === 'Experience' && (!title || title.startsWith('company:'))) {
+            // Try to extract title from filename
+            // Format: "06_mumo-systems-senior-solutions-consultant.md" -> "Senior Solutions Consultant"
+            const filename = item.name.replace(/^\d+_/, '').replace('.md', '');
+            const parts = filename.split('-');
+            
+            // Remove company name parts and capitalize remaining words
+            if (filename.includes('mumo-systems-senior-solutions-consultant')) {
+              title = 'Senior Solutions Consultant';
+            } else {
+              // General fallback: capitalize and join the last few parts
+              const titleParts = parts.slice(-3); // Take last 3 parts as likely job title
+              title = titleParts.map((word: string) => 
+                word.charAt(0).toUpperCase() + word.slice(1)
+              ).join(' ');
             }
-          });
+          }
         }
         
         return {
@@ -142,24 +181,58 @@ async function fetchDirectoryListing(directory: string) {
       })
   );
 
-  // Sort by start date if available, otherwise by order then title
-  const parseStart = (value: any): number => {
-    if (!value) return -Infinity;
-    const ts = Date.parse(value);
-    if (!isNaN(ts)) return ts;
-    const m = String(value).match(/\d{4}/);
-    return m ? parseInt(m[0]) : -Infinity;
-  };
-
-  files.sort((a, b) => {
-    const startA = parseStart(a.metadata?.start);
-    const startB = parseStart(b.metadata?.start);
-    if (startA !== -Infinity || startB !== -Infinity) {
-      return startB - startA;
-    }
-    if (a.order !== b.order) return a.order - b.order;
-    return a.title.localeCompare(b.title);
-  });
+  // Sort files based on directory type
+  if (directory === 'Projects') {
+    // For Projects, sort by status (In Progress first), then by timeline/period (most recent first)
+    files.sort((a, b) => {
+      // First priority: In Progress status
+      const aInProgress = a.metadata?.status?.toLowerCase() === 'in progress';
+      const bInProgress = b.metadata?.status?.toLowerCase() === 'in progress';
+      
+      if (aInProgress && !bInProgress) return -1;
+      if (!aInProgress && bInProgress) return 1;
+      
+      // Second priority: Sort by timeline or period (most recent first)
+      const aDate = extractProjectDate(a.metadata?.timeline || a.metadata?.period || '');
+      const bDate = extractProjectDate(b.metadata?.timeline || b.metadata?.period || '');
+      
+      if (aDate !== bDate) return bDate - aDate; // Most recent first
+      
+      // Fallback to order, then title
+      if (a.order !== b.order) return a.order - b.order;
+      return a.title.localeCompare(b.title);
+    });
+  } else if (directory === 'Education') {
+    // For Education, sort by period (most recent first)
+    files.sort((a, b) => {
+      const aDate = extractEducationEndDate(a.metadata?.period || '');
+      const bDate = extractEducationEndDate(b.metadata?.period || '');
+      
+      if (aDate !== bDate) return bDate - aDate; // Most recent first
+      
+      // Fallback to order, then title
+      if (a.order !== b.order) return a.order - b.order;
+      return a.title.localeCompare(b.title);
+    });
+  } else if (directory === 'Experience') {
+    // For Experience, sort by period (most recent first)
+    files.sort((a, b) => {
+      const aDate = extractExperienceEndDate(a.metadata?.period || '');
+      const bDate = extractExperienceEndDate(b.metadata?.period || '');
+      
+      if (aDate !== bDate) return bDate - aDate; // Most recent first
+      
+      // Fallback to order, then title
+      if (a.order !== b.order) return a.order - b.order;
+      return a.title.localeCompare(b.title);
+    });
+  } else {
+    // For other directories, sort by order, then by title
+    files.sort((a, b) => {
+      if (a.order !== b.order) return a.order - b.order;
+      return a.title.localeCompare(b.title);
+    });
+  }
 
   return NextResponse.json({ files });
 }
@@ -267,10 +340,24 @@ function getFallbackDirectoryContent(directory: string) {
     ],
     'Projects': [
       {
+        name: 'devflow-cli.md',
+        title: 'DevFlow CLI',
+        order: 1,
+        metadata: { status: 'Active', timeline: 'Present' },
+        downloadUrl: null
+      },
+      {
         name: 'atlassian-enterprise-migration.md',
         title: 'Atlassian Server to Data Center Migration',
-        order: 1,
-        metadata: { company: 'Berkley Technology Services', period: '2020-2021' },
+        order: 2,
+        metadata: { company: 'Berkley Technology Services', period: '2020-2021', status: 'Completed' },
+        downloadUrl: null
+      },
+      {
+        name: 'servicenow-atlassian-integration.md',
+        title: 'ServiceNow-Atlassian Integration',
+        order: 3,
+        metadata: { period: '2018-2020', status: 'Completed' },
         downloadUrl: null
       }
     ],
@@ -280,6 +367,20 @@ function getFallbackDirectoryContent(directory: string) {
         title: 'Master of Science in Information Technology',
         order: 1,
         metadata: { institution: 'University of Phoenix Online', period: 'September 2008 - May 2010' },
+        downloadUrl: null
+      },
+      {
+        name: 'university-phoenix-bachelors.md',
+        title: 'Bachelor of Science in Information Technology',
+        order: 2,
+        metadata: { institution: 'University of Phoenix Online', period: 'September 2003 - December 2005' },
+        downloadUrl: null
+      },
+      {
+        name: 'additional-coursework.md',
+        title: 'Additional Technical Coursework',
+        order: 3,
+        metadata: { institution: 'Various Institutions', period: '1996 - 2003' },
         downloadUrl: null
       }
     ],
@@ -303,8 +404,184 @@ function getFallbackDirectoryContent(directory: string) {
     ]
   };
 
-  const files = fallbackData[directory] || [];
+  let files = fallbackData[directory] || [];
+  
+  // Apply the same sorting logic as the main function
+  if (directory === 'Projects') {
+    // For Projects, sort by status (In Progress first), then by timeline/period (most recent first)
+    files.sort((a, b) => {
+      // First priority: In Progress status
+      const aInProgress = a.metadata?.status?.toLowerCase() === 'in progress';
+      const bInProgress = b.metadata?.status?.toLowerCase() === 'in progress';
+      
+      if (aInProgress && !bInProgress) return -1;
+      if (!aInProgress && bInProgress) return 1;
+      
+      // Second priority: Sort by timeline or period (most recent first)
+      const aDate = extractProjectDate(a.metadata?.timeline || a.metadata?.period || '');
+      const bDate = extractProjectDate(b.metadata?.timeline || b.metadata?.period || '');
+      
+      if (aDate !== bDate) return bDate - aDate; // Most recent first
+      
+      // Fallback to order, then title
+      if (a.order !== b.order) return a.order - b.order;
+      return a.title.localeCompare(b.title);
+    });
+  } else if (directory === 'Education') {
+    // For Education, sort by period (most recent first)
+    files.sort((a, b) => {
+      const aDate = extractEducationEndDate(a.metadata?.period || '');
+      const bDate = extractEducationEndDate(b.metadata?.period || '');
+      
+      if (aDate !== bDate) return bDate - aDate; // Most recent first
+      
+      // Fallback to order, then title
+      if (a.order !== b.order) return a.order - b.order;
+      return a.title.localeCompare(b.title);
+    });
+  } else if (directory === 'Experience') {
+    // For Experience, sort by period (most recent first)
+    files.sort((a, b) => {
+      const aDate = extractExperienceEndDate(a.metadata?.period || '');
+      const bDate = extractExperienceEndDate(b.metadata?.period || '');
+      
+      if (aDate !== bDate) return bDate - aDate; // Most recent first
+      
+      // Fallback to order, then title
+      if (a.order !== b.order) return a.order - b.order;
+      return a.title.localeCompare(b.title);
+    });
+  }
+  
   return NextResponse.json({ files });
+}
+
+// Helper function to extract end date from experience period for sorting
+function extractExperienceEndDate(period: string): number {
+  if (!period) return 0;
+  
+  // Handle "Present" or current position
+  if (period.toLowerCase().includes('present') || period.toLowerCase().includes('current')) {
+    return Date.now();
+  }
+  
+  // Handle date ranges by looking for " - " (space-dash-space) as separator
+  // This handles formats like "June 2021 - June 2022" or "2018 - 2021"
+  const rangeSeparator = ' - ';
+  if (period.includes(rangeSeparator)) {
+    const parts = period.split(rangeSeparator);
+    const endDateStr = parts[parts.length - 1].trim();
+    return parseExperienceDate(endDateStr);
+  }
+  
+  // Single date, use it as both start and end
+  return parseExperienceDate(period);
+}
+
+// Helper function to parse experience dates
+function parseExperienceDate(dateStr: string): number {
+  // Handle "Present" case
+  if (dateStr.toLowerCase().includes('present')) {
+    return Date.now();
+  }
+  
+  // Try to parse formats like "June 2022" or "September 2015"
+  const monthYearMatch = dateStr.match(/(\w+)\s+(\d{4})/);
+  if (monthYearMatch) {
+    const [, month, year] = monthYearMatch;
+    const date = new Date(`${month} 1, ${year}`);
+    return date.getTime();
+  }
+  
+  // Try year only format like "2021"
+  const yearOnlyMatch = dateStr.match(/(\d{4})/);
+  if (yearOnlyMatch) {
+    const [, year] = yearOnlyMatch;
+    return new Date(`December 31, ${year}`).getTime();
+  }
+  
+  // Fallback: try to parse as-is
+  const date = new Date(dateStr);
+  return isNaN(date.getTime()) ? 0 : date.getTime();
+}
+
+// Helper function to extract end date from education period for sorting
+function extractEducationEndDate(period: string): number {
+  if (!period) return 0;
+  
+  // Handle "Present" or ongoing education
+  if (period.toLowerCase().includes('present') || period.toLowerCase().includes('ongoing')) {
+    return Date.now();
+  }
+  
+  // Handle date ranges by looking for " - " (space-dash-space) as separator
+  // This handles formats like "2008-09 - 2010-05" or "September 2008 - May 2010"
+  const rangeSeparator = ' - ';
+  if (period.includes(rangeSeparator)) {
+    const parts = period.split(rangeSeparator);
+    const endDateStr = parts[parts.length - 1].trim();
+    return parseEducationDate(endDateStr);
+  }
+  
+  // Single date, use it as both start and end
+  return parseEducationDate(period);
+}
+
+// Helper function to parse education dates
+function parseEducationDate(dateStr: string): number {
+  // Try to parse YYYY-MM format like "2010-05" (May 2010)
+  const yearMonthMatch = dateStr.match(/(\d{4})-(\d{2})/);
+  if (yearMonthMatch) {
+    const [, year, month] = yearMonthMatch;
+    return new Date(parseInt(year), parseInt(month) - 1, 1).getTime();
+  }
+  
+  // Try to parse formats like "May 2010" or "December 2005"
+  const monthYearMatch = dateStr.match(/(\w+)\s+(\d{4})/);
+  if (monthYearMatch) {
+    const [, month, year] = monthYearMatch;
+    const date = new Date(`${month} 1, ${year}`);
+    return date.getTime();
+  }
+  
+  // Try year only format like "2005"
+  const yearOnlyMatch = dateStr.match(/(\d{4})/);
+  if (yearOnlyMatch) {
+    const [, year] = yearOnlyMatch;
+    return new Date(`December 31, ${year}`).getTime();
+  }
+  
+  // Fallback: try to parse as-is
+  const date = new Date(dateStr);
+  return isNaN(date.getTime()) ? 0 : date.getTime();
+}
+
+// Helper function to extract end date from project timeline/period for sorting
+function extractProjectDate(dateStr: string): number {
+  if (!dateStr) return 0;
+  
+  // Handle "Active" or "In Progress" status - treat as current time
+  if (dateStr.toLowerCase().includes('active') || dateStr.toLowerCase().includes('in progress')) {
+    return Date.now();
+  }
+  
+  // Handle "Present" case - return current time
+  if (dateStr.toLowerCase().includes('present')) {
+    return Date.now();
+  }
+  
+  // Extract years from formats like "2020-2021" or "2020 - 2021" or just "2021"
+  const yearMatches = dateStr.match(/\d{4}/g);
+  if (yearMatches && yearMatches.length > 0) {
+    // Get the last (most recent) year
+    const lastYear = yearMatches[yearMatches.length - 1];
+    // Use December 31st of that year for sorting
+    return new Date(`December 31, ${lastYear}`).getTime();
+  }
+  
+  // Fallback: try to parse as-is
+  const date = new Date(dateStr);
+  return isNaN(date.getTime()) ? 0 : date.getTime();
 }
 
 function getFallbackFileContent(directory: string, filename: string) {
