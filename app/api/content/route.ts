@@ -127,6 +127,10 @@ async function fetchDirectoryListing(directory: string) {
           const periodMatch = frontmatter.match(/period:\s*"?([^"\n]+)"?/);
           const statusMatch = frontmatter.match(/status:\s*"?([^"\n]+)"?/);
           const timelineMatch = frontmatter.match(/timeline:\s*"?([^"\n]+)"?/);
+          const institutionMatch = frontmatter.match(/institution:\s*"?([^"\n]+)"?/);
+          const schoolMatch = frontmatter.match(/school:\s*"?([^"\n]+)"?/);
+          const startMatch = frontmatter.match(/start:\s*"?([^"\n]+)"?/);
+          const endMatch = frontmatter.match(/end:\s*"?([^"\n]+)"?/);
           
           if (titleMatch) title = titleMatch[1];
           if (orderMatch) order = parseInt(orderMatch[1]);
@@ -134,6 +138,17 @@ async function fetchDirectoryListing(directory: string) {
           if (periodMatch) metadata.period = periodMatch[1];
           if (statusMatch) metadata.status = statusMatch[1];
           if (timelineMatch) metadata.timeline = timelineMatch[1];
+          if (institutionMatch) metadata.institution = institutionMatch[1];
+          if (schoolMatch) metadata.institution = schoolMatch[1]; // Use school as institution
+          
+          // Build period from start and end dates if available
+          if (startMatch && endMatch) {
+            metadata.period = `${startMatch[1]} - ${endMatch[1]}`;
+          } else if (startMatch) {
+            metadata.period = startMatch[1];
+          } else if (endMatch) {
+            metadata.period = endMatch[1];
+          }
         }
         
         return {
@@ -396,19 +411,28 @@ function extractEducationEndDate(period: string): number {
     return Date.now();
   }
   
-  // Extract the end date from formats like "September 2008 - May 2010" or "2003 - 2005"
-  const parts = period.split('-');
-  if (parts.length < 2) {
-    // Single date, use it as both start and end
-    return parseEducationDate(period);
+  // Handle date ranges by looking for " - " (space-dash-space) as separator
+  // This handles formats like "2008-09 - 2010-05" or "September 2008 - May 2010"
+  const rangeSeparator = ' - ';
+  if (period.includes(rangeSeparator)) {
+    const parts = period.split(rangeSeparator);
+    const endDateStr = parts[parts.length - 1].trim();
+    return parseEducationDate(endDateStr);
   }
   
-  const endDateStr = parts[parts.length - 1].trim();
-  return parseEducationDate(endDateStr);
+  // Single date, use it as both start and end
+  return parseEducationDate(period);
 }
 
 // Helper function to parse education dates
 function parseEducationDate(dateStr: string): number {
+  // Try to parse YYYY-MM format like "2010-05" (May 2010)
+  const yearMonthMatch = dateStr.match(/(\d{4})-(\d{2})/);
+  if (yearMonthMatch) {
+    const [, year, month] = yearMonthMatch;
+    return new Date(parseInt(year), parseInt(month) - 1, 1).getTime();
+  }
+  
   // Try to parse formats like "May 2010" or "December 2005"
   const monthYearMatch = dateStr.match(/(\w+)\s+(\d{4})/);
   if (monthYearMatch) {

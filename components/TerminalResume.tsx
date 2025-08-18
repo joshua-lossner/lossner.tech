@@ -536,8 +536,16 @@ Google Cloud Platform
             if (timeInfo) {
               displayInfo = ` (${timeInfo})`;
             }
+          } else if (directory === 'Education') {
+            // Special handling for Education directory
+            if (file.metadata?.institution) {
+              displayTitle = `${file.title} - ${file.metadata.institution}`;
+            }
+            if (file.metadata?.period) {
+              displayInfo = ` (${file.metadata.period})`;
+            }
           } else {
-            // Original logic for other directories
+            // Original logic for other directories (Experience, etc.)
             if (file.metadata?.company) {
               displayTitle = `${file.title} - ${file.metadata.company}`;
             }
