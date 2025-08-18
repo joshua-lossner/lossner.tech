@@ -164,7 +164,7 @@ async function fetchDirectoryListing(directory: string) {
             } else {
               // General fallback: capitalize and join the last few parts
               const titleParts = parts.slice(-3); // Take last 3 parts as likely job title
-              title = titleParts.map(word => 
+              title = titleParts.map((word: string) => 
                 word.charAt(0).toUpperCase() + word.slice(1)
               ).join(' ');
             }
