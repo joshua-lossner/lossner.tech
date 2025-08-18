@@ -708,7 +708,7 @@ Google Cloud Platform
           await showDirectoryListing('Journal')
           return
         case '6':
-          await showDirectoryListing('About')
+          await showFileContent('About', 'joshua-lossner-profile.md')
           return
       }
     }
@@ -753,7 +753,7 @@ Google Cloud Platform
         break
       case '/about':
       case 'about':
-        await showDirectoryListing('About')
+        await showFileContent('About', 'joshua-lossner-profile.md')
         break
       case '/experience':
       case 'experience':
