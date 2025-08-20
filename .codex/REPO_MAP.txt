@@ -1,0 +1,41 @@
+.
+├── .codex
+│   ├── GUARDRAILS.md
+│   ├── OUTPUT_FORMAT.md
+│   └── REPO_MAP.txt
+├── .env.example
+├── .github
+│   ├── ISSUE_TEMPLATE
+│   │   └── codex-task.md
+│   └── PULL_REQUEST_TEMPLATE.md
+├── .gitignore
+├── README.md
+├── app
+│   ├── api
+│   │   ├── chat
+│   │   │   └── route.ts
+│   │   ├── content
+│   │   │   └── route.ts
+│   │   └── speech
+│   │       └── route.ts
+│   ├── globals.css
+│   ├── layout.tsx
+│   └── page.tsx
+├── components
+│   └── TerminalResume.tsx
+├── docs
+│   ├── ARCHITECTURE.md
+│   ├── CONTENT_SCHEMA.md
+│   ├── COPY_TONE.md
+│   └── STYLEGUIDE.md
+├── next-env.d.ts
+├── next.config.js
+├── package-lock.json
+├── package.json
+├── postcss.config.js
+├── public
+│   └── package.json
+├── tailwind.config.js
+└── tsconfig.json
+
+12 directories, 27 files
