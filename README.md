@@ -18,3 +18,10 @@ This repository powers Joshua Lossner’s personal website (**lossner.tech**).
 
 ## Conventions
 - See `docs/STYLEGUIDE.md` (code) and `docs/COPY_TONE.md` (site text).
+
+## Web Analytics
+
+- Enable Analytics in Vercel → Project → Analytics → Enable.
+- Deploy (or redeploy) to activate routes under /_vercel/insights/*.
+- Verify in devtools Network tab you see /_vercel/insights/view requests on page load.
+

@@ -15,6 +15,7 @@ export default function RootLayout({
     <html lang="en">
       <body>
         {children}
+        {/* Vercel Web Analytics: see requests to /_vercel/insights/view after deploy */}
         <Analytics />
       </body>
     </html>
