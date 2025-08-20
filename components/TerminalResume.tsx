@@ -24,6 +24,7 @@ const TerminalResume = () => {
   const [audioEnabled, setAudioEnabled] = useState(false)
   const [isPlaying, setIsPlaying] = useState(false)
   const [needsInputDivider, setNeedsInputDivider] = useState(false)
+  const [navigationHistory, setNavigationHistory] = useState<string[]>(['main'])
   const terminalRef = useRef<HTMLDivElement>(null)
   const hiddenInputRef = useRef<HTMLInputElement>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
@@ -139,6 +140,7 @@ const TerminalResume = () => {
     setCurrentMenu('main')
     setCurrentDirectory('')
     setNeedsInputDivider(true)
+    setNavigationHistory(['main'])
     await showBanner()
     await addLine(createBorder('MAIN MENU'), 'normal')
     await addLine('')
@@ -155,9 +157,13 @@ const TerminalResume = () => {
     await addLine('')
   }
 
-  const showHelp = async () => {
+  const showHelp = async (addToHistory: boolean = true) => {
+    if (addToHistory) {
+      setNavigationHistory(prev => [...prev, 'help'])
+    }
     setTerminalLines([])
     setNeedsInputDivider(false)
+    setCurrentMenu('help')
     await showBanner()
     await addLine(createBorder('AVAILABLE COMMANDS'), 'normal')
     await addLine('')
@@ -187,7 +193,10 @@ const TerminalResume = () => {
   }
 
 
-  const showExperience = async () => {
+  const showExperience = async (addToHistory: boolean = true) => {
+    if (addToHistory) {
+      setNavigationHistory(prev => [...prev, 'experience'])
+    }
     setTerminalLines([])
     setIsDisplayingContent(true)
     setNeedsInputDivider(false)
@@ -264,7 +273,10 @@ const TerminalResume = () => {
     await addLine('')
   }
 
-  const showSkills = async () => {
+  const showSkills = async (addToHistory: boolean = true) => {
+    if (addToHistory) {
+      setNavigationHistory(prev => [...prev, 'skills'])
+    }
     setTerminalLines([])
     setIsDisplayingContent(true)
     setNeedsInputDivider(false)
@@ -317,7 +329,10 @@ const TerminalResume = () => {
     await addLine('')
   }
 
-  const showProjects = async () => {
+  const showProjects = async (addToHistory: boolean = true) => {
+    if (addToHistory) {
+      setNavigationHistory(prev => [...prev, 'projects'])
+    }
     setTerminalLines([])
     setIsDisplayingContent(true)
     setNeedsInputDivider(false)
@@ -380,7 +395,10 @@ AI-powered code assistant providing intelligent code completion and refactoring 
     await addLine('')
   }
 
-  const showEducation = async () => {
+  const showEducation = async (addToHistory: boolean = true) => {
+    if (addToHistory) {
+      setNavigationHistory(prev => [...prev, 'education'])
+    }
     setTerminalLines([])
     setIsDisplayingContent(true)
     setNeedsInputDivider(false)
@@ -427,8 +445,14 @@ Google Cloud Platform
     await addLine('')
   }
 
-  const showContact = async () => {
+  const showContact = async (addToHistory: boolean = true) => {
+    if (addToHistory) {
+      setNavigationHistory(prev => [...prev, 'contact'])
+    }
     setTerminalLines([])
+    setCurrentMenu('contact')
+    setIsDisplayingContent(false)
+    setNeedsInputDivider(false)
     await showBanner()
     await addLine(createBorder('CONTACT INFORMATION'), 'normal')
     await addLine('')
@@ -505,7 +529,10 @@ Google Cloud Platform
   }
 
   // Show directory listing (like books in coherenceism.info)
-  const showDirectoryListing = async (directory: string) => {
+  const showDirectoryListing = async (directory: string, addToHistory: boolean = true) => {
+    if (addToHistory) {
+      setNavigationHistory(prev => [...prev, `directory:${directory}`])
+    }
     setTerminalLines([])
     setCurrentDirectory(directory)
     setCurrentMenu('directory')
@@ -627,11 +654,18 @@ Google Cloud Platform
   }
 
   // Show file content (like chapter in coherenceism.info)
-  const showFileContent = async (directory: string, filename: string) => {
+  const showFileContent = async (
+    directory: string,
+    filename: string,
+    addToHistory: boolean = true
+  ) => {
+    if (addToHistory) {
+      setNavigationHistory(prev => [...prev, `file:${directory}:${filename}`])
+    }
     setTerminalLines([])
     setIsDisplayingContent(true)
     setNeedsInputDivider(false)
-    
+
     const fileData = await fetchFileContent(directory, filename)
     
     if (!fileData) {
@@ -665,6 +699,48 @@ Google Cloud Platform
     await addLine('')
     await addLine('Type /menu to return or navigate with arrow keys.', 'processing')
     await addLine('')
+  }
+
+  const navigateBack = async () => {
+    if (navigationHistory.length > 1) {
+      const newHistory = navigationHistory.slice(0, -1)
+      const last = newHistory[newHistory.length - 1]
+      setNavigationHistory(newHistory)
+      const parts = last.split(':')
+      switch (parts[0]) {
+        case 'main':
+          await showMainMenu()
+          break
+        case 'help':
+          await showHelp(false)
+          break
+        case 'directory':
+          await showDirectoryListing(parts[1], false)
+          break
+        case 'file':
+          await showFileContent(parts[1], parts.slice(2).join(':'), false)
+          break
+        case 'experience':
+          await showExperience(false)
+          break
+        case 'skills':
+          await showSkills(false)
+          break
+        case 'projects':
+          await showProjects(false)
+          break
+        case 'education':
+          await showEducation(false)
+          break
+        case 'contact':
+          await showContact(false)
+          break
+        default:
+          await showMainMenu()
+      }
+    } else {
+      await showMainMenu()
+    }
   }
 
   const callAI = async (message: string) => {
@@ -783,23 +859,12 @@ Google Cloud Platform
       case '/menu':
       case 'menu':
       case 'm':
-        setCurrentMenu('main')
         await showMainMenu()
         break
       case 'x':
       case '/back':
       case 'back':
-        if (isDisplayingContent && currentDirectory) {
-          // Go back to directory listing
-          setIsDisplayingContent(false)
-          await showDirectoryListing(currentDirectory)
-        } else if (currentMenu === 'directory') {
-          // Go back to main menu from directory
-          await showMainMenu()
-        } else {
-          // Default to main menu
-          await showMainMenu()
-        }
+        await navigateBack()
         break
       case '/help':
       case 'help':
@@ -1169,7 +1234,7 @@ Google Cloud Platform
             <div className="border-b border-terminal-green-dim">
               <div className="px-8 py-2 flex items-center gap-2">
                 <button
-                  onClick={() => processCommand('/menu')}
+                  onClick={() => navigateBack()}
                   className="px-4 py-1 border border-terminal-green bg-black text-terminal-green hover:bg-terminal-green hover:text-black transition-all duration-200 font-mono text-sm"
                 >
                   E<span className="underline decoration-2 underline-offset-1">X</span>IT
