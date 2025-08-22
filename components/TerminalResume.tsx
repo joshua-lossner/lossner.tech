@@ -878,6 +878,7 @@ Google Cloud Platform
       case 'x':
       case '/back':
       case 'back':
+      case 'b':
         await navigateBack()
         break
       case '/help':

@@ -51,6 +51,13 @@ export default function BackButton({ onBack, label: overrideLabel, href: overrid
     }
   }
 
+  const displayLabel = (
+    <>
+      <span className="underline">{label.charAt(0)}</span>
+      {label.slice(1)}
+    </>
+  )
+
   return (
     <button
       onClick={handleClick}
@@ -58,7 +65,7 @@ export default function BackButton({ onBack, label: overrideLabel, href: overrid
       title={label}
       className="px-4 py-1 border border-terminal-green bg-black text-terminal-green hover:bg-terminal-green hover:text-black transition-all duration-200 font-mono text-sm"
     >
-      {label}
+      {displayLabel}
     </button>
   )
 }
