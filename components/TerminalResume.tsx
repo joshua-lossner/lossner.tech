@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react'
 import ReactMarkdown from 'react-markdown'
+import FooterNav from './FooterNav'
 
 interface TerminalLine {
   text: string
@@ -743,6 +744,19 @@ Google Cloud Platform
     }
   }
 
+  const backConfig = (() => {
+    if (navigationHistory.length < 2) return undefined
+    const prev = navigationHistory[navigationHistory.length - 2]
+    if (prev.startsWith('directory:')) {
+      const section = prev.split(':')[1]
+      return {
+        label: `BACK TO ${section.toUpperCase()} MENU`,
+        href: `/${section.toLowerCase()}`
+      }
+    }
+    return { label: 'BACK TO MENU', href: '/' }
+  })()
+
   const callAI = async (message: string) => {
     try {
       const response = await fetch('/api/chat', {
@@ -864,6 +878,7 @@ Google Cloud Platform
       case 'x':
       case '/back':
       case 'back':
+      case 'b':
         await navigateBack()
         break
       case '/help':
@@ -1232,30 +1247,13 @@ Google Cloud Platform
           {/* Terminal-style navigation buttons */}
           {(isDisplayingContent || currentMenu !== 'main') && (
             <div className="border-b border-terminal-green-dim">
-              <div className="px-8 py-2 flex items-center gap-2">
-                <button
-                  onClick={() => navigateBack()}
-                  className="px-4 py-1 border border-terminal-green bg-black text-terminal-green hover:bg-terminal-green hover:text-black transition-all duration-200 font-mono text-sm"
-                >
-                  E<span className="underline decoration-2 underline-offset-1">X</span>IT
-                </button>
-                
-                <div className="flex-1"></div>
-                
-                <button
-                  onClick={() => processCommand('/menu')}
-                  className="px-4 py-1 border border-terminal-green bg-black text-terminal-green hover:bg-terminal-green hover:text-black transition-all duration-200 font-mono text-sm"
-                >
-                  <span className="underline decoration-2 underline-offset-1">M</span>ENU
-                </button>
-                
-                <button
-                  onClick={() => processCommand('/help')}
-                  className="px-4 py-1 border border-terminal-green bg-black text-terminal-green hover:bg-terminal-green hover:text-black transition-all duration-200 font-mono text-sm ml-2"
-                >
-                  <span className="underline decoration-2 underline-offset-1">H</span>ELP
-                </button>
-              </div>
+              <FooterNav
+                onBack={() => navigateBack()}
+                onMenu={() => processCommand('/menu')}
+                onHelp={() => processCommand('/help')}
+                backLabel={backConfig?.label}
+                backHref={backConfig?.href}
+              />
             </div>
           )}
           
