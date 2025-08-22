@@ -7,12 +7,14 @@ interface FooterNavProps {
   onBack?: () => void
   onMenu?: () => void
   onHelp?: () => void
+  backLabel?: string
+  backHref?: string
 }
 
-export default function FooterNav({ onBack, onMenu, onHelp }: FooterNavProps) {
+export default function FooterNav({ onBack, onMenu, onHelp, backLabel, backHref }: FooterNavProps) {
   return (
     <div className="px-8 py-2 flex items-center gap-2">
-      <BackButton onBack={onBack} />
+      <BackButton onBack={onBack} label={backLabel} href={backHref} />
       <div className="flex-1"></div>
       {onMenu ? (
         <button

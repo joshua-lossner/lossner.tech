@@ -744,6 +744,19 @@ Google Cloud Platform
     }
   }
 
+  const backConfig = (() => {
+    if (navigationHistory.length < 2) return undefined
+    const prev = navigationHistory[navigationHistory.length - 2]
+    if (prev.startsWith('directory:')) {
+      const section = prev.split(':')[1]
+      return {
+        label: `BACK TO ${section.toUpperCase()} MENU`,
+        href: `/${section.toLowerCase()}`
+      }
+    }
+    return { label: 'BACK TO MENU', href: '/' }
+  })()
+
   const callAI = async (message: string) => {
     try {
       const response = await fetch('/api/chat', {
@@ -1237,6 +1250,8 @@ Google Cloud Platform
                 onBack={() => navigateBack()}
                 onMenu={() => processCommand('/menu')}
                 onHelp={() => processCommand('/help')}
+                backLabel={backConfig?.label}
+                backHref={backConfig?.href}
               />
             </div>
           )}

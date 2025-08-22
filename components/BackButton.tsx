@@ -17,23 +17,25 @@ type Section = keyof typeof SECTION_CONFIG
 
 interface BackButtonProps {
   onBack?: () => void
+  label?: string
+  href?: string
 }
 
-export default function BackButton({ onBack }: BackButtonProps) {
+export default function BackButton({ onBack, label: overrideLabel, href: overrideHref }: BackButtonProps) {
   const pathname = usePathname()
   const router = useRouter()
 
   // Hide the button only on the home page when no custom back handler is supplied
-  if (pathname === '/' && !onBack) return null
+  if (pathname === '/' && !onBack && !overrideLabel) return null
 
   const segments = pathname.split('/').filter(Boolean)
   const section = segments[0] as Section | undefined
   const depth = segments.length
 
-  let label = 'BACK TO MENU'
-  let href = '/'
+  let label = overrideLabel ?? 'BACK TO MENU'
+  let href = overrideHref ?? '/'
 
-  if (section && SECTION_CONFIG[section]) {
+  if (!overrideLabel && section && SECTION_CONFIG[section]) {
     const { menu, label: sectionLabel } = SECTION_CONFIG[section]
     if (depth > 1) {
       label = `BACK TO ${sectionLabel} MENU`
