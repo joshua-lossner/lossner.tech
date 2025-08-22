@@ -6,10 +6,16 @@ const KNOWN_SECTIONS = ['experience', 'skills', 'projects', 'education', 'journa
 
 type Section = typeof KNOWN_SECTIONS[number]
 
-export default function BackButton() {
+interface BackButtonProps {
+  onBack?: () => void
+}
+
+export default function BackButton({ onBack }: BackButtonProps) {
   const pathname = usePathname()
   const router = useRouter()
-  if (pathname === '/') return null
+
+  // Hide the button only on the home page when no custom back handler is supplied
+  if (pathname === '/' && !onBack) return null
 
   const segments = pathname.split('/').filter(Boolean)
   const section = segments[0] as Section | undefined
@@ -25,9 +31,17 @@ export default function BackButton() {
     }
   }
 
+  const handleClick = () => {
+    if (onBack) {
+      onBack()
+    } else {
+      router.push(href)
+    }
+  }
+
   return (
     <button
-      onClick={() => router.push(href)}
+      onClick={handleClick}
       aria-label={label}
       title={label}
       className="px-4 py-1 border border-terminal-green bg-black text-terminal-green hover:bg-terminal-green hover:text-black transition-all duration-200 font-mono text-sm"

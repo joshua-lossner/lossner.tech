@@ -1233,7 +1233,11 @@ Google Cloud Platform
           {/* Terminal-style navigation buttons */}
           {(isDisplayingContent || currentMenu !== 'main') && (
             <div className="border-b border-terminal-green-dim">
-              <FooterNav />
+              <FooterNav
+                onBack={() => navigateBack()}
+                onMenu={() => processCommand('/menu')}
+                onHelp={() => processCommand('/help')}
+              />
             </div>
           )}
           
