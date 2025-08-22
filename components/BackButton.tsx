@@ -2,9 +2,18 @@
 
 import { usePathname, useRouter } from 'next/navigation'
 
-const KNOWN_SECTIONS = ['experience', 'skills', 'projects', 'education', 'journal', 'about'] as const
+const SECTION_CONFIG = {
+  experience: { menu: '/experience', label: 'EXPERIENCE' },
+  skills: { menu: '/skills', label: 'SKILLS' },
+  skill: { menu: '/skills', label: 'SKILL' },
+  projects: { menu: '/projects', label: 'PROJECTS' },
+  project: { menu: '/projects', label: 'PROJECT' },
+  education: { menu: '/education', label: 'EDUCATION' },
+  journal: { menu: '/journal', label: 'JOURNAL' },
+  about: { menu: '/about', label: 'ABOUT' }
+} as const
 
-type Section = typeof KNOWN_SECTIONS[number]
+type Section = keyof typeof SECTION_CONFIG
 
 interface BackButtonProps {
   onBack?: () => void
@@ -24,10 +33,11 @@ export default function BackButton({ onBack }: BackButtonProps) {
   let label = 'BACK TO MENU'
   let href = '/'
 
-  if (section && (KNOWN_SECTIONS as readonly string[]).includes(section)) {
+  if (section && SECTION_CONFIG[section]) {
+    const { menu, label: sectionLabel } = SECTION_CONFIG[section]
     if (depth > 1) {
-      label = `BACK TO ${section.toUpperCase()} MENU`
-      href = `/${section}`
+      label = `BACK TO ${sectionLabel} MENU`
+      href = menu
     }
   }
 
