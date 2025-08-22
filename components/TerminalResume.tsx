@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react'
 import ReactMarkdown from 'react-markdown'
+import FooterNav from './FooterNav'
 
 interface TerminalLine {
   text: string
@@ -1232,30 +1233,7 @@ Google Cloud Platform
           {/* Terminal-style navigation buttons */}
           {(isDisplayingContent || currentMenu !== 'main') && (
             <div className="border-b border-terminal-green-dim">
-              <div className="px-8 py-2 flex items-center gap-2">
-                <button
-                  onClick={() => navigateBack()}
-                  className="px-4 py-1 border border-terminal-green bg-black text-terminal-green hover:bg-terminal-green hover:text-black transition-all duration-200 font-mono text-sm"
-                >
-                  E<span className="underline decoration-2 underline-offset-1">X</span>IT
-                </button>
-                
-                <div className="flex-1"></div>
-                
-                <button
-                  onClick={() => processCommand('/menu')}
-                  className="px-4 py-1 border border-terminal-green bg-black text-terminal-green hover:bg-terminal-green hover:text-black transition-all duration-200 font-mono text-sm"
-                >
-                  <span className="underline decoration-2 underline-offset-1">M</span>ENU
-                </button>
-                
-                <button
-                  onClick={() => processCommand('/help')}
-                  className="px-4 py-1 border border-terminal-green bg-black text-terminal-green hover:bg-terminal-green hover:text-black transition-all duration-200 font-mono text-sm ml-2"
-                >
-                  <span className="underline decoration-2 underline-offset-1">H</span>ELP
-                </button>
-              </div>
+              <FooterNav />
             </div>
           )}
           
